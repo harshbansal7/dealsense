@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # Main Joinly Core Service
+  joinly-core:
+    image: ghcr.io/joinly-ai/joinly:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PORT=8000
+    volumes:
+      - joinly_data:/app/data
+    networks:
+      - joinly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Joinly Manager Backend (Go)
+  joinly-manager-backend:
+    build:
+      context: ./backend_v2
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8001
+      - JOINLY_URL=http://joinly-core:8000/mcp/
+    depends_on:
+      joinly-core:
+        condition: service_healthy
+    networks:
+      - joinly-network
+    restart: unless-stopped
+    volumes:
+      - manager_data:/app/data
+      - manager_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # Joinly Manager Frontend (Next.js)
+  joinly-manager-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      joinly-manager-backend:
+        condition: service_healthy
+    networks:
+      - joinly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  joinly-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  joinly_data:
+    driver: local
+  manager_data:
+    driver: local
+  manager_logs:
+    driver: local

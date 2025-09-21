@@ -1,0 +1,22 @@
+# Add these lines to .gitignore to exclude environment and data files
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker volumes and data
+data/
+logs/
+backup/
+
+# Docker Compose override files
+docker-compose.override.yml
+
+# Development files
+*.log
+*.pid
+
+# OS generated files
+.DS_Store
+Thumbs.db
