@@ -20,24 +20,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { dev, isServer }) => {
-    // Ensure path aliases are properly resolved
+  webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),
-      '@/lib': path.resolve(__dirname, 'src/lib'),
-      '@/components': path.resolve(__dirname, 'src/components'),
-      '@/app': path.resolve(__dirname, 'src/app'),
     };
-    
-    // Ensure TypeScript files are properly resolved
-    config.resolve.extensions = ['.ts', '.tsx', '.js', '.jsx', ...config.resolve.extensions];
-    
     return config;
-  },
-  experimental: {
-    // Ensure TypeScript path mapping works in production builds
-    typedRoutes: true,
   },
 };
 
