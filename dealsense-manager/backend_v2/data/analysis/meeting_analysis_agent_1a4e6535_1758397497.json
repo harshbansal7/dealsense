@@ -1,0 +1,273 @@
+{
+  "meeting_id": "agent_1a4e6535",
+  "meeting_url": "https://meet.google.com/ysd-ebwn-uys?authuser=0",
+  "start_time": "2025-09-21T01:14:57.681855+05:30",
+  "last_updated": "2025-09-21T01:17:39.948475+05:30",
+  "transcript": [
+    {
+      "timestamp": "2025-09-21T01:15:39.542847+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Morning, everyone.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:15:45.547743+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "It is my immense pleasure to welcome you all as we introduce the Doggy Shop.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:15:49.538585+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "A new age startup dedicated to the health and happiness of our beloved",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:15:53.539333+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Canyon companions. At the doggy shop, we have a simple mission.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:15:58.540322+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Now a simple mission. To create a one stop platform where dog parents",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:03.537776+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "can easily access quality medicines, wellness products, and essential care items.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:05.537803+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "All delivered to the dostier.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:10.536793+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Our front end leverages React and Next. J's technologies.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:14.539773+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Ensuring a seamless and responsive user experience across devices.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:18.536553+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "The back end is powered by Node. Js and Express",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:21.571017+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "while our database rise on Postgres and structured data",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:25.537351+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "and Redis for caching, giving us lightning fast performance during high traffic periods.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:32.540683+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "In our initial quarter, we have successfully onboarded over",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:36.535868+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "thousand loyal customers and partnered with more than fifty ready",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:40.535748+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "veterinary clinics and certified suppliers.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:43.535715+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Our revenue trajectory shows a twenty five percent month on month growth.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:46.54111+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "And customer retention rates have already closed seventy percent.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:50.535206+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Proving that our value proposition resonates strongly with the market.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:16:57.54009+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "For cloud infrastructure, we use AWS",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:01.542622+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "combining e c two for compute, s three for storage,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:04.539799+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "CloudFront for efficient global content delivery,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:07.535415+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Our DevOps pipeline is fully automated with",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:10.544415+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Docker and Kubernetes enabling us to deploy updates",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:13.536076+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "with zero downtime and dynamic scaling.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:20.53427+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "We are not just about sales. We are building a community.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:24.537172+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Through our curated content and personalized recommendations, we aim to educate dog owners",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:28.534618+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "on preventive health care and responsible pet care.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:33.579737+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "Our near term plan includes expanding into tier two and tier",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T01:17:39.948474+05:30",
+      "speaker": "Surya Vashisth",
+      "text": "tier three cities, bringing reliable pet health care products to under underserved areas.",
+      "is_agent": false
+    }
+  ],
+  "summary": "The meeting served as an introduction to \"Doggy Shop,\" a new startup focused on providing a one-stop platform for dog owners to access quality medicines, wellness products, and essential care items, all delivered to their doorstep. The platform's technology stack was detailed, with the front end utilizing React and Next.js for a seamless user experience, and the back end powered by Node.js and Express. Data management is handled by Postgres for structured data and Redis for caching, ensuring high performance. In its initial quarter, Doggy Shop has achieved significant traction, onboarding over a thousand customers and partnering with more than fifty veterinary clinics and certified suppliers. The company is experiencing a 25% month-on-month revenue growth and boasts a customer retention rate of over 70%. For cloud infrastructure, AWS is being used, specifically EC2 for compute and S3 for storage.",
+  "grounded_summary": {
+    "text": "The meeting served as an introduction to \"Doggy Shop,\" a new startup focused on providing a one-stop platform for dog owners to access quality medicines, wellness products, and essential care items, all delivered to their doorstep. The platform's technology stack was detailed, with the front end utilizing React and Next.js for a seamless user experience, and the back end powered by Node.js and Express. Data management is handled by Postgres for structured data and Redis for caching, ensuring high performance. In its initial quarter, Doggy Shop has achieved significant traction, onboarding over a thousand customers and partnering with more than fifty veterinary clinics and certified suppliers. The company is experiencing a 25% month-on-month revenue growth and boasts a customer retention rate of over 70%. For cloud infrastructure, AWS is being used, specifically EC2 for compute and S3 for storage.",
+    "text_with_citations": "The meeting served as an introduction to \"Doggy Shop,\" a new startup focused on providing a one-stop platform for dog owners to access quality medicines, wellness products, and essential care items, all delivered to their doorstep. The platform's technology stack was detailed, with the front end utilizing React and Next.js for a seamless user experience, and the back end powered by Node.js and Express. Data management is handled by Postgres for structured data and Redis for caching, ensuring high performance. In its initial quarter, Doggy Shop has achieved significant traction, onboarding over a thousand customers and partnering with more than fifty veterinary clinics and certified suppliers. The company is experiencing a 25% month-on-month revenue growth and boasts a customer retention rate of over 70%. For cloud infrastructure, AWS is being used, specifically EC2 for compute and S3 for storage.",
+    "grounding_metadata": {
+      "web_search_queries": null,
+      "grounding_chunks": null,
+      "grounding_supports": null
+    }
+  },
+  "key_points": [
+    "Doggy Shop is a new startup aiming to be a one-stop platform for dog parents to access quality medicines, wellness products, and essential care items, delivered to their doors.",
+    "The front end uses React and Next.js, while the back end is powered by Node.js and Express. The database utilizes Postgres for structured data and Redis for caching.",
+    "Cloud infrastructure is managed by AWS, using EC2 for compute and S3 for storage.",
+    "In the initial quarter, Doggy Shop onboarded over 1,000 customers and partnered with over 50 veterinary clinics and certified suppliers.",
+    "The company is experiencing 25% month-on-month revenue growth and has achieved customer retention rates exceeding 70%."
+  ],
+  "grounded_key_points": {
+    "text": "• Doggy Shop is a new startup aiming to be a one-stop platform for dog parents to access quality medicines, wellness products, and essential care items, delivered to their doors.\n• The front end uses React and Next.js, while the back end is powered by Node.js and Express. The database utilizes Postgres for structured data and Redis for caching.\n• Cloud infrastructure is managed by AWS, using EC2 for compute and S3 for storage.\n• In the initial quarter, Doggy Shop onboarded over 1,000 customers and partnered with over 50 veterinary clinics and certified suppliers.\n• The company is experiencing 25% month-on-month revenue growth and has achieved customer retention rates exceeding 70%.",
+    "text_with_citations": "• Doggy Shop is a new startup aiming to be a one-stop platform for dog parents to access quality medicines, wellness products, and essential care items, delivered to their doors.\n• The front end uses React and Next.js, while the back end is powered by Node.js and Express. The database utilizes Postgres for structured data and Redis for caching.\n• Cloud infrastructure is managed by AWS, using EC2 for compute and S3 for storage.\n• In the initial quarter, Doggy Shop onboarded over 1,000 customers and partnered with over 50 veterinary clinics and certified suppliers.\n• The company is experiencing 25% month-on-month revenue growth and has achieved customer retention rates exceeding 70%.",
+    "grounding_metadata": {
+      "web_search_queries": null,
+      "grounding_chunks": null,
+      "grounding_supports": null
+    }
+  },
+  "action_items": [],
+  "topics": [
+    {
+      "topic": "Introduction of Doggy Shop",
+      "start_time": "01:15:45",
+      "duration_minutes": 15,
+      "summary": "Surya Vashisth introduces Doggy Shop, a new startup focused on the health and happiness of dogs. The platform aims to be a one-stop shop for dog parents to access quality medicines, wellness products, and essential care items, all delivered to their doorstep.",
+      "participants": [
+        "Surya Vashisth"
+      ]
+    },
+    {
+      "topic": "Doggy Shop Technology Stack",
+      "start_time": "01:16:10",
+      "duration_minutes": 15,
+      "summary": "Harsh Bansal details the technology used for the Doggy Shop platform. The front end utilizes React and Next.js for a responsive user experience. The back end is powered by Node.js and Express. The database uses Postgres for structured data and Redis for caching to ensure high performance during peak traffic.",
+      "participants": [
+        "Harsh Bansal"
+      ]
+    },
+    {
+      "topic": "Doggy Shop Initial Performance Metrics",
+      "start_time": "01:16:32",
+      "duration_minutes": 14,
+      "summary": "Surya Vashisth presents the initial performance of Doggy Shop in its first quarter. This includes onboarding over a thousand customers, partnering with fifty veterinary clinics and suppliers, achieving a 25% month-on-month revenue growth, and maintaining a customer retention rate above 70%.",
+      "participants": [
+        "Surya Vashisth"
+      ]
+    },
+    {
+      "topic": "Doggy Shop Cloud Infrastructure",
+      "start_time": "01:16:57",
+      "duration_minutes": 4,
+      "summary": "Harsh Bansal outlines the cloud infrastructure used for Doggy Shop, which is AWS. Specifically, EC2 is used for compute power and S3 for storage.",
+      "participants": [
+        "Harsh Bansal"
+      ]
+    }
+  ],
+  "participants": [
+    "Surya Vashisth",
+    "Harsh Bansal"
+  ],
+  "duration_minutes": 2.7046001125,
+  "word_count": 274,
+  "sentiment": "positive",
+  "keywords": [
+    "Doggy Shop",
+    "health and happiness",
+    "dog parents",
+    "quality medicines",
+    "wellness products",
+    "essential care items",
+    "React",
+    "Next.js",
+    "Node.js",
+    "Express",
+    "Postgres",
+    "Redis",
+    "AWS",
+    "loyal customers",
+    "veterinary clinics",
+    "month on month growth",
+    "customer retention rates"
+  ]
+}

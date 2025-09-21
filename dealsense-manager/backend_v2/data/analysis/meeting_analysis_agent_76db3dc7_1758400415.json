@@ -1,0 +1,989 @@
+{
+  "meeting_id": "agent_76db3dc7",
+  "meeting_url": "https://meet.google.com/ysd-ebwn-uys?authuser=0",
+  "start_time": "2025-09-21T02:03:35.332269+05:30",
+  "last_updated": "2025-09-21T02:13:46.008185+05:30",
+  "transcript": [
+    {
+      "timestamp": "2025-09-21T02:04:29.001512+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Hello, Surya. I am Harsh Bansal from the LVX team.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:33.999001+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Today, we have set up this call to discuss",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:37.000359+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "your start up, what you are doing, what are your plans for future,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:41.998993+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "what impact do you plan to create, and what are your ask",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:45.999013+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "in terms of investment as well as support from our company?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:49.996625+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So let's get started. Hi, Harsh.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:04:53.377401+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Firstly, thank you for inviting me and giving me giving me the opportunity to be on platform.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:00.002756+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So, basically, my company's name is AI Vala.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:06.427776+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "And our purpose is to give affordable AI education to everyone.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:11.000871+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So nowadays, we are we are seeing that the students",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:15.000067+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "the, you know, freshly graduates, they're struggling to, you know, access",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:17.998498+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "high quality job ready, you know, content.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:23.004057+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Bet our education system, our be it the way",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:28.001632+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "their mindset have been for the past",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:30.996473+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "fourteen years to be in the school, like, and in the college. Right?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:35.00289+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So our focus is to, you know, cover that gap, cover that skill gap.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:38.995999+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So that the, you know, underemployment rate reduces.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:43.997074+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So currently Can you tell me something from your experiences",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:48.000541+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "like, things you might have faced in your college days, something that can help us relate",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:52.995672+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "to the problem, actually. Okay. Okay. Okay. So the problems that I've faced,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:05:58.424031+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Basically, I'll say that, you know, our system like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:03.000684+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "the curriculum which mine was they had, it was more of",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:07.007528+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, the the focus was more on the theoretical part.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:11.995956+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? Instead of giving a hands on experience to students, promoting that",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:15.997293+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, since the, you know, since the first day",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:21.004704+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "they should start developing. They should focus on, you know,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:24.994415+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "more projects instead of theory. Theory is important.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:28.993823+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "But to an extent. Right? I if you're getting my point,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:31.995152+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So instead of having that, develop a project, learn",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:36.994078+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "in the journey, you know, you at this point of time, incorporate",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:41.995343+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "All I know is that I have to like, I have this x thing. I have this y thing.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:45.025502+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "And I have to make a product out of it.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:49.993719+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "I don't have to go into the curing part. Alright. That",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:53.003421+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "from how that x thing was derived or from how that y thing was derived,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:06:56.993966+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "the logical building that can come when one works",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:00.993692+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, on practical things. So",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:03.994366+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, this is my solution only that I will give them",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:07.99842+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "projects. I will give them, like, mentorship. I will give them a learning path.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:11.992997+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Through which they can, you know, see that where their skills",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:15.993107+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, align, like, on what platform",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:19.993242+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "on what projects, you know, excites them?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:22.995274+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Got it. Right. And I'll be giving them this",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:26.003879+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "in affordable prices. But, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:29.993349+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "tell me something about, like, there are many companies",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:33.993091+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "already trying to make a difference in this field.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:37.992029+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Yeah. We have we even have PhysicsValor for",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:40.99468+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "example, who started by teaching physics, but eventually, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:44.994436+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "ended up making an institute. It still is affordable as far as I know.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:48.991776+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Mhmm. And they are providing courses for almost everything, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:54.00771+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "computers and all and all these new tech stuff.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:57.995389+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So, I mean, in this cluttered market, do you even think it is worth opening the start up?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:07:59.996198+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "See,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:04.994452+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "beat Physics Bala. He's covering",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:08.993761+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "everything from class eight, six that I'm not wrong till UPS.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:13.994076+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? Correct. But that is all theoretically.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:18.992451+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? How to crack board exams? How to crack twelve exams? How to crack j, meet,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:23.998981+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, how to, you know, grab the theoretical part of the of",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:27.994773+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "for the interviews. Got it. What about the projects? How",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:32.990291+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "will you know that with what mindset one should you",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:35.989826+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "focus to complete a project? Like, what are all the requirements?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:40.204157+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? You know, the logical building",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:44.043029+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? From what one should start? Like, I have seen many students",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:48.053648+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "in the third year, in the fourth year.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:51.990952+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "If I will give them a project to make that, alright. Make a, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:08:55.992067+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "a video summarizing, you know, AI model. Make something like that.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:01.000024+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "But do you think people will even, like, listen to what you ask them to do",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:04.989364+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "don't want to work, they won't work. And in online mode,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:08.989725+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "I think the feeling is",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:11.991281+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "not conveyed properly between the teacher",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:14.993129+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "the student. The students are basically sitting there because their parents have asked them to sit there.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:19.989659+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So in those situations, how does your product life",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:23.989356+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "help them get more retention? How does it ensure that, okay,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:27.991187+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "your to my agenda, you practically. Okay.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:35.988134+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Eventually participant",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:46.989476+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So in that case, what are your plans? See,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:49.991072+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "we would know",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:09:56.426549+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "this point of time pay any university cannot change their curriculum. Because",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:00.98794+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "they are you know, they have to be aligned.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:05.98925+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right. So what they can do, they can have a third party system.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:09.991353+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "They can have a you know, we can go to universities. We know",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:13.997473+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "India tier one, tier two university, they see here,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:17.987348+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "employment",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:21.99087+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "placement rate Companies go to tier one",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:25.987235+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "The hiring rate is more than tier three renewals.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:30.026405+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "In first place. Right? Tier three",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:34.020359+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "struggles are the hard work and not prepare to prove their work. Right?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:37.995944+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Not theoretical.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:40.986555+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Right? They have to show certain projects. They have to show certain",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:44.012016+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "things that they have built. They'll be coming.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:48.992385+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "We will have a partnership with tier three university.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:52.992082+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Target students.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:55.985855+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "We will promote these products. We will promote",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:10:57.985959+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "this",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:06.464928+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "yeah. We will promote projects Right? We will help students step by step.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:10.986858+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "The the Oh, yeah. It's step by",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:20.422903+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "or what is your ask? Okay. Okay.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:24.985359+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "So if I'll say currently,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:29.986197+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "been three years on the market my way. Right? And",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:34.984782+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "for the first year, our revenue was around three point two close.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:38.983554+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "The GM percent was sixty two percent.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:41.988546+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "And EBITDA was around minus twenty five percent.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:45.984563+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "This was Why was this negative? And that too, why, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:48.991681+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "twenty five percent. Yeah. So",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:11:58.466944+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "basically, at that point of time, Homara focus quality",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:02.983984+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Great. And to give more quality instead of",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:06.98422+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "you know, focusing on the quantity or on the values,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:09.990414+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "which we knew quality",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:14.988078+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "And",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:17.986083+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "that eventually happened in year two and year",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:20.983746+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "three. Year two, ten per revenue wire",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:24.982956+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "GM increased up to sixty nine. EBITDA",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:27.985915+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "In group one, last meeting, it was minus five.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:30.989004+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "But, yeah, there was improvement. In year three, EBITDA amounted twelve percent",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:33.984198+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "positive.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:41.490202+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Our ask is at this point of time is eight gross seed of for eighteen months. Take care.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:47.399707+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Ask case is meeting say or what do you expect from us?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:52.984256+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "What do I expect from you? I expect basically",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:12:55.990292+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "I'll say, you know,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:00.995793+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Alex, your career network, the network that you bring",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:06.001257+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "the knowledge, the mentorship, like,",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:08.003561+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "and or your time?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:11.000164+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "How much money do you want?",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:16.016879+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "For that. Eight crores for eighteen months. I'm not aware. Ask.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:21.008073+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Okay.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:24.009909+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "We have noted down all the things that you have told us.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:29.008269+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "And we'll come back to you",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:32.007856+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "after discussing internally and doing our due diligence.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:36.008035+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Also, we are requesting you to kindly share all your documents and",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:41.007209+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "early pitch decks so that we can use them for our analysis.",
+      "is_agent": false
+    },
+    {
+      "timestamp": "2025-09-21T02:13:46.008184+05:30",
+      "speaker": "Harsh Bansal",
+      "text": "Purposes. Sure. So Hello, Sayan. Yeah.",
+      "is_agent": false
+    }
+  ],
+  "summary": "The meeting transcript discusses the challenges of the current education market, particularly for startups, and explores potential solutions. Harsh Bansal raises concerns about the effectiveness of existing online education platforms, citing \"Physics Walla\" as an example that focuses heavily on theoretical knowledge for exams like JEE and NEET, but neglects practical project-based learning. Bansal highlights that many students, even in their third and fourth years of university, struggle with project work due to a lack of practical guidance and motivation, especially in an online learning environment where student engagement is low. The conversation then shifts to a potential business strategy involving partnerships with \"tier three\" universities in India. The idea is to leverage a third-party system to supplement university curricula, which are often rigid and difficult to change. The proposed approach involves targeting students in these universities, promoting project-based learning, and providing step-by-step guidance to help them build practical skills and projects. This is seen as a way to improve their employability and placement rates, as companies tend to recruit more from universities with higher placement records. Bansal also shares some financial data for their venture, stating that in their first year on the market, they achieved a revenue of \"around three point two crore\" with a \"GM percent\" of sixty-two percent. However, the transcript does not provide specific details about the product or service being offered, nor does it offer a clear \"ask\" or call to action.",
+  "grounded_summary": {
+    "text": "The meeting transcript discusses the challenges of the current education market, particularly for startups, and explores potential solutions. Harsh Bansal raises concerns about the effectiveness of existing online education platforms, citing \"Physics Walla\" as an example that focuses heavily on theoretical knowledge for exams like JEE and NEET, but neglects practical project-based learning. Bansal highlights that many students, even in their third and fourth years of university, struggle with project work due to a lack of practical guidance and motivation, especially in an online learning environment where student engagement is low. The conversation then shifts to a potential business strategy involving partnerships with \"tier three\" universities in India. The idea is to leverage a third-party system to supplement university curricula, which are often rigid and difficult to change. The proposed approach involves targeting students in these universities, promoting project-based learning, and providing step-by-step guidance to help them build practical skills and projects. This is seen as a way to improve their employability and placement rates, as companies tend to recruit more from universities with higher placement records. Bansal also shares some financial data for their venture, stating that in their first year on the market, they achieved a revenue of \"around three point two crore\" with a \"GM percent\" of sixty-two percent. However, the transcript does not provide specific details about the product or service being offered, nor does it offer a clear \"ask\" or call to action.",
+    "text_with_citations": "The meeting transcript discusses the challenges of the current education market, particularly for startups, and explores potential solutions. Harsh Bansal raises concerns about the effectiveness of existing online education platforms, citing \"Physics Walla\" as an example that focuses heavily on theoretical knowledge for exams like JEE and NEET, but neglects practical project-based learning. Bansal highlights that many students, even in their third and fourth years of university, struggle with project work due to a lack of practical guidance and motivation, especially in an online learning environment where student engagement is low. The conversation then shifts to a potential business strategy involving partnerships with \"tier three\" universities in India. The idea is to leverage a third-party system to supplement university curricula, which are often rigid and difficult to change. The proposed approach involves targeting students in these universities, promoting project-based learning, and providing step-by-step guidance to help them build practical skills and projects. This is seen as a way to improve their employability and placement rates, as companies tend to recruit more from universities with higher placement records. Bansal also shares some financial data for their venture, stating that in their first year on the market, they achieved a revenue of \"around three point two crore\" with a \"GM percent\" of sixty-two percent. However, the transcript does not provide specific details about the product or service being offered, nor does it offer a clear \"ask\" or call to action.",
+    "grounding_metadata": {
+      "web_search_queries": null,
+      "grounding_chunks": null,
+      "grounding_supports": null
+    }
+  },
+  "key_points": [
+    "Decision: The team will promote products and help students step-by-step.",
+    "Critical Information: The company has been in the market for three years. Year 1 revenue was 3.2 crore with 62% GM and -25% EBITDA. Year 2 revenue was 10 crore with 69% GM and -5% EBITDA. Year 3 EBITDA was 12% positive.",
+    "Critical Information: The initial negative EBITDA in Year 1 was due to a focus on quality over quantity or value.",
+    "Action-oriented Statement: 'We will promote these products. We will promote this... We will help students step by step.'",
+    "Question: 'Why was this negative? And that too, why, like, twenty five percent?' (Referring to Year 1 EBITDA)",
+    "Commitment/Ask: Seeking 8 crore gross seed funding for 18 months.",
+    "Expectation from Alex: Bring career network, knowledge, and mentorship."
+  ],
+  "grounded_key_points": {
+    "text": "• Decision: The team will promote products and help students step-by-step.\n• Critical Information: The company has been in the market for three years. Year 1 revenue was 3.2 crore with 62% GM and -25% EBITDA. Year 2 revenue was 10 crore with 69% GM and -5% EBITDA. Year 3 EBITDA was 12% positive.\n• Critical Information: The initial negative EBITDA in Year 1 was due to a focus on quality over quantity or value.\n• Action-oriented Statement: 'We will promote these products. We will promote this... We will help students step by step.'\n• Question: 'Why was this negative? And that too, why, like, twenty five percent?' (Referring to Year 1 EBITDA)\n• Commitment/Ask: Seeking 8 crore gross seed funding for 18 months.\n• Expectation from Alex: Bring career network, knowledge, and mentorship.",
+    "text_with_citations": "• Decision: The team will promote products and help students step-by-step.\n• Critical Information: The company has been in the market for three years. Year 1 revenue was 3.2 crore with 62% GM and -25% EBITDA. Year 2 revenue was 10 crore with 69% GM and -5% EBITDA. Year 3 EBITDA was 12% positive.\n• Critical Information: The initial negative EBITDA in Year 1 was due to a focus on quality over quantity or value.\n• Action-oriented Statement: 'We will promote these products. We will promote this... We will help students step by step.'\n• Question: 'Why was this negative? And that too, why, like, twenty five percent?' (Referring to Year 1 EBITDA)\n• Commitment/Ask: Seeking 8 crore gross seed funding for 18 months.\n• Expectation from Alex: Bring career network, knowledge, and mentorship.",
+    "grounding_metadata": {
+      "web_search_queries": null,
+      "grounding_chunks": null,
+      "grounding_supports": null
+    }
+  },
+  "action_items": [
+    {
+      "id": "",
+      "description": "Investigate the root cause of the negative EBITDA (-25%) in year one, specifically how prioritizing quality over quantity/value impacted financial performance.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "investigation",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Analyze the revenue growth from year one (3.2 Cr) to year two (10 Cr) and identify key drivers for this significant increase.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "investigation",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Research and document best practices for partnerships with tier three universities, focusing on strategies to effectively target students and promote projects.",
+      "assignee": "Reviewer",
+      "priority": "medium",
+      "type": "research",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Develop a structured approach to help tier three university students build and showcase projects, addressing the challenge of proving practical work over theoretical knowledge.",
+      "assignee": "Reviewer",
+      "priority": "high",
+      "type": "task",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Define the specific 'ask' for Alex's career network, knowledge, and mentorship, detailing how these resources will be leveraged to achieve the stated goals.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "task",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Research the typical hiring rates and placement success for graduates from tier one, tier two, and tier three universities in India, to validate the initial premise.",
+      "assignee": "Reviewer",
+      "priority": "medium",
+      "type": "research",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Investigate the challenges faced by tier three university students in proving their practical work and identify potential solutions or frameworks to address this gap.",
+      "assignee": "Reviewer",
+      "priority": "high",
+      "type": "investigation",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Explore potential partnership models with tier three universities that can lead to mutually beneficial outcomes for both the institution and the students.",
+      "assignee": "Reviewer",
+      "priority": "medium",
+      "type": "research",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Quantify the 'eight gross seed for eighteen months' ask, breaking down the required funding and its allocation over the specified period.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "task",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Gather data on the current market landscape for the product/service, focusing on competitors and market demand, to support the funding ask.",
+      "assignee": "Reviewer",
+      "priority": "medium",
+      "type": "research",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Identify specific metrics and KPIs that will be used to track progress and demonstrate the impact of Alex's network, knowledge, and mentorship.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "task",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Research successful case studies of companies partnering with tier three universities for talent acquisition and development.",
+      "assignee": "Reviewer",
+      "priority": "low",
+      "type": "research",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Investigate potential tools or platforms that can facilitate project showcasing for students from tier three universities.",
+      "assignee": "Reviewer",
+      "priority": "medium",
+      "type": "investigation",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "",
+      "description": "Clarify the specific 'products' and 'this' that will be promoted to tier three university students.",
+      "assignee": "Harsh Bansal",
+      "priority": "high",
+      "type": "task",
+      "status": "",
+      "created_at": "0001-01-01T00:00:00Z"
+    }
+  ],
+  "topics": [
+    {
+      "topic": "University Partnerships and Student Employability",
+      "start_time": "02:09:19",
+      "duration_minutes": 1.8,
+      "summary": "Discussion on how the product can improve student retention and employability, particularly for tier three universities. The challenge of universities not being able to change their curriculum is acknowledged, suggesting third-party systems as a solution. The plan involves partnering with tier three universities to promote projects and help students build practical skills, which are crucial for companies looking for candidates with demonstrable work beyond theoretical knowledge. The conversation touches upon the higher hiring rates in tier one universities compared to tier three.",
+      "participants": [
+        "Harsh Bansal"
+      ]
+    },
+    {
+      "topic": "Company Financial Performance and Growth",
+      "start_time": "02:11:24",
+      "duration_minutes": 2.3,
+      "summary": "Harsh Bansal presents the company's financial performance over the past three years. In year one, revenue was 3.2 crores with a 62% GM and a -25% EBITDA, attributed to a focus on quality over quantity. Year two saw revenue growth, a GM increase to 69%, and an improved EBITDA of -5%. By year three, the EBITDA turned positive at 12%. The negative EBITDA in the first year is explained by the emphasis on quality.",
+      "participants": [
+        "Harsh Bansal"
+      ]
+    },
+    {
+      "topic": "Funding Ask and Expectations",
+      "start_time": "02:12:41",
+      "duration_minutes": 1.2,
+      "summary": "The current ask is for 8 crores in seed funding for 18 months. Harsh Bansal outlines expectations from the other party, which include leveraging their career network, bringing in knowledge, and providing mentorship.",
+      "participants": [
+        "Harsh Bansal"
+      ]
+    }
+  ],
+  "participants": [
+    "Harsh Bansal"
+  ],
+  "duration_minutes": 10.177852501383333,
+  "word_count": 1200,
+  "sentiment": "mixed",
+  "keywords": [
+    "EBITDA",
+    "quality",
+    "revenue",
+    "GM",
+    "ask",
+    "mentorship",
+    "network",
+    "knowledge"
+  ]
+}
