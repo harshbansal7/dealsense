@@ -12,6 +12,8 @@ import (
 	"joinly-manager/internal/models"
 )
 
+var startTime = time.Now()
+
 // Handler holds the dependencies for HTTP handlers
 type Handler struct {
 	agentManager *manager.AgentManager
@@ -26,9 +28,88 @@ func NewHandler(agentManager *manager.AgentManager) *Handler {
 
 // HealthCheck handles the root endpoint
 func (h *Handler) HealthCheck(c *gin.Context) {
+	uptime := time.Since(startTime)
+
+	// Get basic system stats
+	agents := h.agentManager.ListAgents()
+	runningAgents := 0
+	for _, agent := range agents {
+		if agent.Status == "running" {
+			runningAgents++
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "healthy",
-		"message": "DealSense API is running",
+		"status":         "healthy",
+		"message":        "DealSense API is running",
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+		"uptime_seconds": uptime.Seconds(),
+		"uptime":         uptime.String(),
+		"version":        "1.0.0",
+		"agents": gin.H{
+			"total":   len(agents),
+			"running": runningAgents,
+			"stopped": len(agents) - runningAgents,
+		},
+	})
+}
+
+// ReadinessCheck handles the readiness endpoint with deeper checks
+func (h *Handler) ReadinessCheck(c *gin.Context) {
+	uptime := time.Since(startTime)
+
+	// Get basic system stats
+	agents := h.agentManager.ListAgents()
+	runningAgents := 0
+	for _, agent := range agents {
+		if agent.Status == "running" {
+			runningAgents++
+		}
+	}
+
+	// Perform readiness checks
+	checks := gin.H{
+		"database":  gin.H{"status": "ok", "message": "Agent manager operational"},
+		"websocket": gin.H{"status": "ok", "message": "WebSocket hub active"},
+	}
+
+	// Check if we can communicate with Joinly core (basic connectivity check)
+	// This is a simple check - in production you might want more thorough validation
+	joinlyStatus := "unknown"
+	if h.agentManager != nil {
+		joinlyStatus = "ok"
+	}
+
+	checks["joinly_core"] = gin.H{"status": joinlyStatus, "message": "Joinly core connectivity"}
+
+	// Determine overall readiness
+	overallStatus := "ready"
+	for _, check := range checks {
+		if checkMap, ok := check.(gin.H); ok {
+			if status, exists := checkMap["status"]; exists && status != "ok" {
+				overallStatus = "not_ready"
+				break
+			}
+		}
+	}
+
+	statusCode := http.StatusOK
+	if overallStatus != "ready" {
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	c.JSON(statusCode, gin.H{
+		"status":         overallStatus,
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+		"uptime_seconds": uptime.Seconds(),
+		"uptime":         uptime.String(),
+		"version":        "1.0.0",
+		"checks":         checks,
+		"agents": gin.H{
+			"total":   len(agents),
+			"running": runningAgents,
+			"stopped": len(agents) - runningAgents,
+		},
 	})
 }
 

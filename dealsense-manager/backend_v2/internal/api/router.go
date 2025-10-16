@@ -39,6 +39,8 @@ func SetupRouter(cfg *config.Config, agentManager *manager.AgentManager) *gin.En
 
 	// Health check
 	router.GET("/", handler.HealthCheck)
+	router.GET("/health", handler.HealthCheck)
+	router.GET("/ready", handler.ReadinessCheck)
 
 	// Agent routes
 	agents := router.Group("/agents")
