@@ -11,7 +11,6 @@ import (
 	"joinly-manager/internal/client"
 	"joinly-manager/internal/config"
 	"joinly-manager/internal/models"
-	"joinly-manager/internal/websocket"
 )
 
 // AgentManager manages multiple Joinly clients
@@ -21,7 +20,6 @@ type AgentManager struct {
 	agents              map[string]*models.Agent
 	meetings            map[string]*models.MeetingInfo
 	analysts            map[string]*client.AnalystAgent // Analyst agents for analysis mode
-	wsHub               *websocket.Hub
 	running             bool
 	startTime           time.Time
 	mu                  sync.RWMutex
@@ -45,7 +43,6 @@ func NewAgentManager(cfg *config.Config) *AgentManager {
 		agents:              make(map[string]*models.Agent),
 		meetings:            make(map[string]*models.MeetingInfo),
 		analysts:            make(map[string]*client.AnalystAgent),
-		wsHub:               websocket.NewHub(),
 		running:             false,
 		startTime:           time.Now(),
 		ctx:                 ctx,
@@ -71,9 +68,6 @@ func (m *AgentManager) Start() error {
 	m.running = true
 	m.startTime = time.Now()
 
-	// Start WebSocket hub
-	m.wsHub.Start()
-
 	logrus.Info("Agent manager started successfully")
 	return nil
 }
@@ -97,9 +91,6 @@ func (m *AgentManager) Stop() error {
 		cancelFunc()
 	}
 	m.utteranceTasks = make(map[string]context.CancelFunc)
-
-	// Stop WebSocket hub
-	m.wsHub.Stop()
 
 	m.mu.Unlock() // Release lock before waiting
 

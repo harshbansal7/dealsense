@@ -57,16 +57,11 @@ func SetupRouter(cfg *config.Config, agentManager *manager.AgentManager) *gin.En
 		agents.GET("/:agent_id/analysis/formatted", handler.GetAgentAnalysisFormatted)
 	}
 
-	// WebSocket routes
-	router.GET("/ws/agents/:agent_id", handler.WebSocketAgent)
-	router.GET("/ws/session", handler.WebSocketSession)
-
 	// Meeting routes
 	router.GET("/meetings", handler.ListMeetings)
 
 	// Additional utility routes
 	router.GET("/usage", handler.GetUsageStats)
-	router.GET("/ws/stats", handler.GetWebSocketStats)
 
 	return router
 }

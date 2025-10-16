@@ -45,7 +45,7 @@ export default function AgentDetailsPage() {
   const router = useRouter();
   const agentId = params.id as string;
 
-  const { agents, removeAgent, updateAgent, addSessionWebSocketListener, setAgents } = useAgentStore();
+  const { agents, removeAgent, updateAgent, setAgents } = useAgentStore();
   const { addNotification } = useUIStore();
 
   const [logs, setLogs] = useState<{ timestamp: string; level: string; message: string }[]>([]);
@@ -172,33 +172,13 @@ export default function AgentDetailsPage() {
     }
   }, [loadLogs, loadAnalysis, agent]);
 
-  // Sync logs from agent state (updated via session WebSocket)
+  // Sync logs from agent state (updated via polling)
   useEffect(() => {
     if (agent && agent.logs) {
       setLogs(agent.logs);
     }
   }, [agent]);
 
-  // Connect to session WebSocket for real-time updates
-  useEffect(() => {
-    const cleanup = addSessionWebSocketListener((message) => {
-      console.log('Agent details WebSocket message:', message);
-
-      // Only process messages for this specific agent
-      if (message.agent_id === agentId) {
-        if (message.type === 'log') {
-          const newLog = {
-            timestamp: (message.data.timestamp as string) || new Date().toISOString(),
-            level: (message.data.level as string) || 'info',
-            message: (message.data.message as string) || 'Unknown log message'
-          };
-          setLogs(prevLogs => [...prevLogs, newLog]);
-        }
-      }
-    });
-
-    return cleanup;
-  }, [addSessionWebSocketListener, agentId]);
 
   const downloadLogs = () => {
     const logText = filteredLogs.map(formatLogEntry).join('\n');

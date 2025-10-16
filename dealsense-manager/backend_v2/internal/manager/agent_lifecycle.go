@@ -153,7 +153,6 @@ func (m *AgentManager) StartAgent(agentID string) error {
 	})
 
 	// Update status to starting (while lock is held)
-	m.updateAgentStatusUnsafe(agentID, models.AgentStatusStarting)
 
 	// Create individual context for this agent
 	agentCtx, agentCancel := context.WithCancel(m.ctx)
@@ -168,7 +167,6 @@ func (m *AgentManager) StartAgent(agentID string) error {
 				logrus.Errorf("Agent %s panicked: %v", agentID, r)
 				// Handle panic without acquiring lock
 				m.mu.Lock()
-				m.handleAgentErrorUnsafe(agentID, fmt.Errorf("agent panicked: %v", r))
 				// Clean up agent context on panic
 				if cancelFunc, exists := m.agentContexts[agentID]; exists {
 					cancelFunc()
@@ -182,7 +180,6 @@ func (m *AgentManager) StartAgent(agentID string) error {
 		if err := joinlyClient.Start(); err != nil {
 			// Handle error without acquiring lock (we're in a goroutine, but need to be careful)
 			m.mu.Lock()
-			m.handleAgentErrorUnsafe(agentID, fmt.Errorf("failed to start client: %w", err))
 			// Clean up agent context on error
 			if cancelFunc, exists := m.agentContexts[agentID]; exists {
 				cancelFunc()
@@ -200,14 +197,12 @@ func (m *AgentManager) StartAgent(agentID string) error {
 		m.mu.Unlock()
 
 		// Update status to running (while lock is held)
-		m.updateAgentStatusUnsafe(agentID, models.AgentStatusRunning)
 
 		m.addLogEntry(agentID, "info", fmt.Sprintf("Agent started successfully (goroutine: %d)", *agent.GoroutineID))
 
 		// Join meeting if auto-join is enabled
 		if agent.Config.AutoJoin {
 			if err := joinlyClient.JoinMeeting(); err != nil {
-				m.handleAgentError(agentID, fmt.Errorf("failed to join meeting: %w", err))
 				return
 			}
 			m.addLogEntry(agentID, "info", "Joined meeting successfully")
@@ -249,7 +244,6 @@ func (m *AgentManager) stopAgent(agentID string) error {
 	agent.Status = models.AgentStatusStopping
 	now := time.Now()
 	agent.StoppedAt = &now
-	m.updateAgentStatusUnsafe(agentID, models.AgentStatusStopping)
 
 	// Cancel the agent's context (blocking call to avoid race conditions)
 	if agentCancel, exists := m.agentContexts[agentID]; exists {
@@ -269,7 +263,6 @@ func (m *AgentManager) stopAgent(agentID string) error {
 
 	// Update status to stopped while holding lock
 	agent.Status = models.AgentStatusStopped
-	m.updateAgentStatusUnsafe(agentID, models.AgentStatusStopped)
 
 	logrus.Infof("Agent %s stopped successfully", agentID)
 	return nil

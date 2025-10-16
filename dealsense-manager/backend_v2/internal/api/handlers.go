@@ -69,8 +69,7 @@ func (h *Handler) ReadinessCheck(c *gin.Context) {
 
 	// Perform readiness checks
 	checks := gin.H{
-		"database":  gin.H{"status": "ok", "message": "Agent manager operational"},
-		"websocket": gin.H{"status": "ok", "message": "WebSocket hub active"},
+		"database": gin.H{"status": "ok", "message": "Agent manager operational"},
 	}
 
 	// Check if we can communicate with Joinly core (basic connectivity check)
@@ -255,26 +254,6 @@ func (h *Handler) GetAgentLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"logs": logs})
 }
 
-// WebSocketAgent handles WebSocket connections for agents
-func (h *Handler) WebSocketAgent(c *gin.Context) {
-	agentID := c.Param("agent_id")
-
-	// Check if agent exists
-	if _, exists := h.agentManager.GetAgent(agentID); !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
-		return
-	}
-
-	wsHub := h.agentManager.GetWebSocketHub()
-	wsHub.ServeWs(c, agentID)
-}
-
-// WebSocketSession handles WebSocket connections for entire user session
-func (h *Handler) WebSocketSession(c *gin.Context) {
-	wsHub := h.agentManager.GetWebSocketHub()
-	wsHub.ServeSessionWs(c)
-}
-
 // ListMeetings handles GET /meetings
 func (h *Handler) ListMeetings(c *gin.Context) {
 	meetings := h.agentManager.ListMeetings()
@@ -285,15 +264,6 @@ func (h *Handler) ListMeetings(c *gin.Context) {
 func (h *Handler) GetUsageStats(c *gin.Context) {
 	stats := h.agentManager.GetUsageStats()
 	c.JSON(http.StatusOK, stats)
-}
-
-// GetWebSocketStats handles GET /ws/stats (additional endpoint for WebSocket stats)
-func (h *Handler) GetWebSocketStats(c *gin.Context) {
-	wsHub := h.agentManager.GetWebSocketHub()
-	c.JSON(http.StatusOK, gin.H{
-		"total_clients":    wsHub.GetClientCount(),
-		"agents_monitored": len(h.agentManager.ListAgents()),
-	})
 }
 
 // GetAgentAnalysis handles GET /agents/{agent_id}/analysis

@@ -40,9 +40,7 @@ export default function AgentsPage() {
     setAgents,
     updateAgent,
     removeAgent,
-    setLoading,
-    connectSessionWebSocket,
-    disconnectSessionWebSocket
+    setLoading
   } = useAgentStore();
 
   const { addNotification } = useUIStore();
@@ -68,7 +66,7 @@ export default function AgentsPage() {
     loadAgents();
   }, [loadAgents]);
 
-  // Fallback polling for status updates (every 10 seconds) in case WebSocket fails
+  // Polling for status updates (every 10 seconds)
   useEffect(() => {
     const pollInterval = setInterval(async () => {
       try {
@@ -96,63 +94,12 @@ export default function AgentsPage() {
     return () => clearInterval(pollInterval);
   }, [agents, setAgents]);
 
-  // Connect to session WebSocket for all agents
-  useEffect(() => {
-    connectSessionWebSocket((message) => {
-      console.log('Session WebSocket message received:', message);
-
-      if (message.type === 'status') {
-        // Find and update the specific agent
-        const agentToUpdate = agents.find(a => a.id === message.agent_id);
-        if (agentToUpdate) {
-          const updatedAgent = { 
-            ...agentToUpdate, 
-            status: message.data.status as Agent['status'],
-            error_message: message.data.error ? message.data.error as string : agentToUpdate.error_message
-          };
-          updateAgent(updatedAgent);
-        }
-      } else if (message.type === 'log') {
-        // Update agent logs - preserve existing logs and append new one
-        const agentToUpdate = agents.find(a => a.id === message.agent_id);
-        if (agentToUpdate) {
-          const currentLogs = agentToUpdate.logs || [];
-          const newLog: LogEntry = {
-            timestamp: (message.data.timestamp as string) || new Date().toISOString(),
-            level: (message.data.level as string) || 'info',
-            message: (message.data.message as string) || 'Unknown log message'
-          };
-          const updatedAgent = {
-            ...agentToUpdate,
-            logs: [...currentLogs, newLog]
-          };
-          updateAgent(updatedAgent);
-        }
-      } else if (message.type === 'error') {
-        // Update agent with error
-        const agentToUpdate = agents.find(a => a.id === message.agent_id);
-        if (agentToUpdate) {
-          const updatedAgent = {
-            ...agentToUpdate,
-            status: 'error' as Agent['status'],
-            error_message: message.data.message as string
-          };
-          updateAgent(updatedAgent);
-        }
-      }
-    });
-
-    return () => {
-      // Cleanup session WebSocket
-      disconnectSessionWebSocket();
-    };
-  }, [connectSessionWebSocket, disconnectSessionWebSocket, updateAgent, agents]);
 
 
   const handleStartAgent = async (agentId: string) => {
     try {
       await agentsApi.start(agentId);
-      // The WebSocket will update the agent status
+      // The polling will update the agent status
       addNotification({
         type: 'success',
         title: 'Agent started',
@@ -171,7 +118,7 @@ export default function AgentsPage() {
   const handleStopAgent = async (agentId: string) => {
     try {
       await agentsApi.stop(agentId);
-      // The WebSocket will update the agent status
+      // The polling will update the agent status
       addNotification({
         type: 'success',
         title: 'Agent stopped',

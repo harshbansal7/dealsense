@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Agent, MeetingInfo, WebSocketManager, SessionWebSocketManager, WebSocketMessage } from './api';
+import { Agent, MeetingInfo } from './api';
 
 interface AgentState {
   agents: Agent[];
@@ -12,10 +12,6 @@ interface AgentState {
   selectedAgent: Agent | null;
   isLoading: boolean;
   error: string | null;
-  webSocketManagers: Map<string, WebSocketManager>;
-  sessionWebSocket: SessionWebSocketManager | null;
-  sessionWebSocketListeners: Set<(message: WebSocketMessage) => void>;
-  isConnecting: boolean; // Add flag to prevent concurrent connections
 }
 
 interface AgentActions {
@@ -29,12 +25,6 @@ interface AgentActions {
   addMeeting: (meeting: MeetingInfo) => void;
   removeMeeting: (id: string) => void;
   setMeetings: (meetings: MeetingInfo[]) => void;
-  connectWebSocket: (agentId: string, onMessage: (message: WebSocketMessage) => void) => void;
-  disconnectWebSocket: (agentId: string) => void;
-  addSessionWebSocketListener: (listener: (message: WebSocketMessage) => void) => () => void;
-  ensureSessionWebSocket: () => void;
-  disconnectSessionWebSocket: () => void;
-  connectSessionWebSocket: (onMessage: (message: WebSocketMessage) => void) => void;
 }
 
 export const useAgentStore = create<AgentState & AgentActions>()(
@@ -46,10 +36,6 @@ export const useAgentStore = create<AgentState & AgentActions>()(
       selectedAgent: null,
       isLoading: false,
       error: null,
-      webSocketManagers: new Map(),
-      sessionWebSocket: null,
-      sessionWebSocketListeners: new Set(),
-      isConnecting: false,
 
       // Actions
       setAgents: (agents) => set({ agents }),
@@ -83,163 +69,6 @@ export const useAgentStore = create<AgentState & AgentActions>()(
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
-      connectWebSocket: (agentId, onMessage) => {
-        const state = get();
-        const existingManager = state.webSocketManagers.get(agentId);
-
-        if (existingManager) {
-          existingManager.disconnect();
-        }
-
-        const manager = new WebSocketManager(
-          agentId,
-          onMessage,
-          (error) => {
-            console.error(`WebSocket error for agent ${agentId}:`, error);
-          },
-          () => {
-            console.log(`WebSocket closed for agent ${agentId}`);
-          }
-        );
-
-        manager.connect();
-        state.webSocketManagers.set(agentId, manager);
-      },
-
-      disconnectWebSocket: (agentId) => {
-        const state = get();
-        const manager = state.webSocketManagers.get(agentId);
-        if (manager) {
-          manager.disconnect();
-          state.webSocketManagers.delete(agentId);
-        }
-      },
-
-      addSessionWebSocketListener: (listener) => {
-        const state = get();
-        
-        // Add listener to set
-        state.sessionWebSocketListeners.add(listener);
-        
-        // Ensure we have a WebSocket connection (but prevent concurrent attempts)
-        if (!state.sessionWebSocket && !state.isConnecting) {
-          set({ isConnecting: true });
-          
-          const manager = new SessionWebSocketManager(
-            (message) => {
-              // Broadcast to all listeners with error handling
-              const currentState = get();
-              currentState.sessionWebSocketListeners.forEach(listener => {
-                try {
-                  listener(message);
-                } catch (error) {
-                  console.error('Error in WebSocket listener:', error);
-                  // Remove broken listener
-                  currentState.sessionWebSocketListeners.delete(listener);
-                }
-              });
-            },
-            (error) => {
-              console.error('Session WebSocket error:', error);
-              // Reset connecting flag on error
-              set({ isConnecting: false });
-            },
-            () => {
-              console.log('Session WebSocket closed');
-              // Reset connecting flag on close
-              set({ isConnecting: false });
-            }
-          );
-
-          try {
-            manager.connect();
-            set({ sessionWebSocket: manager, isConnecting: false });
-          } catch (error) {
-            console.error('Failed to connect WebSocket:', error);
-            set({ isConnecting: false });
-          }
-        }
-
-        // Return cleanup function
-        return () => {
-          const currentState = get();
-          currentState.sessionWebSocketListeners.delete(listener);
-          
-          // If no more listeners, disconnect after a delay to prevent rapid reconnections
-          if (currentState.sessionWebSocketListeners.size === 0) {
-            setTimeout(() => {
-              const finalState = get();
-              if (finalState.sessionWebSocketListeners.size === 0 && finalState.sessionWebSocket) {
-                console.log('No more listeners, disconnecting WebSocket');
-                finalState.sessionWebSocket.disconnect();
-                set({ sessionWebSocket: null, isConnecting: false });
-              }
-            }, 5000); // Increased delay to 5 seconds
-          }
-        };
-      },
-
-      ensureSessionWebSocket: () => {
-        const state = get();
-        if (!state.sessionWebSocket) {
-          const manager = new SessionWebSocketManager(
-            (message) => {
-              // Broadcast to all listeners
-              state.sessionWebSocketListeners.forEach(listener => {
-                try {
-                  listener(message);
-                } catch (error) {
-                  console.error('Error in WebSocket listener:', error);
-                }
-              });
-            },
-            (error) => {
-              console.error('Session WebSocket error:', error);
-            },
-            () => {
-              console.log('Session WebSocket closed');
-            }
-          );
-
-          manager.connect();
-          set({ sessionWebSocket: manager });
-        }
-      },
-
-      disconnectSessionWebSocket: () => {
-        const state = get();
-        console.log('Manually disconnecting session WebSocket');
-        if (state.sessionWebSocket) {
-          state.sessionWebSocket.disconnect();
-          set({ 
-            sessionWebSocket: null, 
-            sessionWebSocketListeners: new Set(),
-            isConnecting: false 
-          });
-        }
-      },
-
-      connectSessionWebSocket: (onMessage) => {
-        const state = get();
-        
-        // Disconnect existing session WebSocket if any
-        if (state.sessionWebSocket) {
-          state.sessionWebSocket.disconnect();
-        }
-
-        const manager = new SessionWebSocketManager(
-          onMessage,
-          (error) => {
-            console.error('Session WebSocket error:', error);
-          },
-          () => {
-            console.log('Session WebSocket closed');
-          }
-        );
-
-        manager.connect();
-        set({ sessionWebSocket: manager });
-      },
     }),
     {
       name: 'agent-store',

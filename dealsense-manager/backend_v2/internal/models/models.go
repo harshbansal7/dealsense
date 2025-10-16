@@ -128,14 +128,6 @@ type UsageStats struct {
 	APICalls      map[string]int `json:"api_calls" yaml:"api_calls"`
 }
 
-// WebSocketMessage represents a WebSocket message
-type WebSocketMessage struct {
-	Type      string                 `json:"type" yaml:"type"`
-	AgentID   string                 `json:"agent_id" yaml:"agent_id"`
-	Data      map[string]interface{} `json:"data" yaml:"data"`
-	Timestamp time.Time              `json:"timestamp" yaml:"timestamp"`
-}
-
 // MeetingParticipant represents a participant in a meeting
 type MeetingParticipant struct {
 	Name   string `json:"name" yaml:"name"`
