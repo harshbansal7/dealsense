@@ -295,7 +295,7 @@ func DefaultConfig() *Config {
 			ReadTimeout:  30 * time.Second,
 			WriteTimeout: 30 * time.Second,
 			CORS: CORSConfig{
-				AllowedOrigins: []string{"http://localhost:3000"},
+				AllowedOrigins: []string{"http://localhost:3000", "https://dealsense-ai.vercel.app"},
 				AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 				AllowedHeaders: []string{"*"},
 			},
