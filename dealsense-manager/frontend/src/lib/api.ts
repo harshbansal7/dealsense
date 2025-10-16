@@ -6,6 +6,9 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
+// WebSocket URL should also be configurable for production
+const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -248,7 +251,7 @@ export class SessionWebSocketManager {
     }
 
     this.isConnecting = true;
-    const wsUrl = 'ws://localhost:8001/ws/session';
+    const wsUrl = `${WS_BASE_URL}/ws/session`;
     console.log(`🔌 Connecting to WebSocket (attempt ${this.reconnectAttempts + 1})`);
     
     try {
@@ -341,7 +344,7 @@ export class WebSocketManager {
       return;
     }
 
-    const wsUrl = `ws://localhost:8001/ws/agents/${this.agentId}`;
+    const wsUrl = `${WS_BASE_URL}/ws/agents/${this.agentId}`;
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     this.ws = new WebSocket(wsUrl);
 

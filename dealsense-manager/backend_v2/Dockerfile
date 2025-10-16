@@ -1,51 +1,51 @@
 # Build stage
 FROM golang:1.24-alpine AS builder
 
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
 # Set working directory
 WORKDIR /app
 
-# Install git (needed for some Go modules)
-RUN apk add --no-cache git
-
-# Copy go mod files
+# Copy go mod files first for better caching
 COPY go.mod go.sum ./
 
 # Download dependencies
-RUN go mod download
+RUN go mod download && go mod verify
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build \
+    -ldflags="-w -s -X main.version=$(git describe --tags --always 2>/dev/null || echo 'dev')" \
+    -a -installsuffix cgo \
+    -o dealsense-manager \
+    ./cmd/server
 
-# Final stage
-FROM alpine:latest
+# Final stage - use distroless for smaller attack surface
+FROM gcr.io/distroless/static-debian12
 
-# Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates tzdata
+# Copy timezone data and certificates
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Create a non-root user and group
+USER 65534:65534
 
-WORKDIR /root/
+# Set working directory
+WORKDIR /app
 
 # Copy the binary from builder stage
-COPY --from=builder /app/main .
-
-# Change ownership of the binary
-RUN chown appuser:appgroup ./main
-
-# Switch to non-root user
-USER appuser
+COPY --from=builder /app/dealsense-manager .
 
 # Expose port
 EXPOSE 8001
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8001/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8001/ || exit 1
 
 # Run the binary
-CMD ["./main"]
+CMD ["/app/dealsense-manager"]
