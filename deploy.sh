@@ -22,13 +22,13 @@ if [ ! -f "dealsense-manager/backend_v2/.env" ]; then
     exit 1
 fi
 
-# Check if docker and docker-compose are available
+# Check if docker and docker compose are available
 if ! command -v docker &> /dev/null; then
     echo "❌ Error: Docker is not installed or not in PATH"
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo "❌ Error: Docker Compose is not installed or not in PATH"
     exit 1
 fi
@@ -59,7 +59,7 @@ COMMAND=${1:-start}
 case $COMMAND in
     start)
         echo "🏗️  Building and starting services..."
-        docker-compose up -d --build
+        docker compose up -d --build
         echo ""
         echo "✅ Services started!"
         echo ""
@@ -78,24 +78,24 @@ case $COMMAND in
 
     stop)
         echo "🛑 Stopping services..."
-        docker-compose down
+        docker compose down
         echo "✅ Services stopped"
         ;;
 
     restart)
         echo "🔄 Restarting services..."
-        docker-compose restart
+        docker compose restart
         echo "✅ Services restarted"
         ;;
 
     logs)
         echo "📋 Showing service logs..."
-        docker-compose logs -f
+        docker compose logs -f
         ;;
 
     status)
         echo "📊 Service Status:"
-        docker-compose ps
+        docker compose ps
         echo ""
         echo "🏥 Health Checks:"
         echo "Joinly Core:"
@@ -106,7 +106,7 @@ case $COMMAND in
 
     clean)
         echo "🧹 Cleaning up services and volumes..."
-        docker-compose down -v --remove-orphans
+        docker compose down -v --remove-orphans
         echo "✅ Cleanup complete"
         ;;
 
