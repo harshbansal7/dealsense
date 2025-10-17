@@ -309,7 +309,7 @@ func DefaultConfig() *Config {
 			},
 		},
 		Joinly: JoinlyConfig{
-			DefaultURL:     "http://135.235.237.143:8000/mcp/",
+			DefaultURL:     "http://joinly-core:8000/mcp/",
 			DefaultTimeout: 30 * time.Second,
 			MaxAgents:      10,
 		},

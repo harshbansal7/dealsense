@@ -1,0 +1,63 @@
+services:
+  # Joinly Core MCP Server
+  joinly-core:
+    image: ghcr.io/joinly-ai/joinly:latest
+    container_name: joinly-core
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env  # Uses .env from root directory
+    environment:
+      - PORT=8000
+    volumes:
+      - joinly_data:/app/data
+    networks:
+      - joinly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # DealSense Backend
+  dealsense-backend:
+    build:
+      context: ./dealsense-manager/backend_v2
+      dockerfile: Dockerfile
+    container_name: dealsense-backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./dealsense-manager/backend_v2/.env  # Uses .env from backend_v2 directory
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8001
+      - JOINLY_URL=http://joinly-core:8000/mcp/
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - MAX_AGENTS=10
+    depends_on:
+      joinly-core:
+        condition: service_healthy
+    networks:
+      - joinly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  joinly-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  joinly_data:
+    driver: local
