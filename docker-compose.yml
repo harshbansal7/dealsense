@@ -14,13 +14,7 @@ services:
     networks:
       - joinly-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
+    
   # DealSense Backend
   dealsense-backend:
     build:
@@ -40,7 +34,7 @@ services:
       - MAX_AGENTS=10
     depends_on:
       joinly-core:
-        condition: service_healthy
+        condition: service_started
     networks:
       - joinly-network
     restart: unless-stopped
