@@ -310,27 +310,27 @@ def cli(  # noqa: PLR0913
 
     if server is True or (server is None and meeting_url is None):
         mcp.run(transport="streamable-http", host=host, port=port, show_banner=False)
-    else:
-        import joinly_client
+    # else:
+    #     import joinly_client
 
-        if not meeting_url:
-            msg = (
-                "Meeting URL is required when running as a client. "
-                "Please provide it as an argument."
-            )
-            raise click.UsageError(msg)
-        asyncio.run(
-            joinly_client.run(
-                joinly_url=mcp,
-                meeting_url=meeting_url,
-                llm_provider=llm_provider,
-                llm_model=llm_model,
-                prompt=prompt,
-                prompt_style=prompt_style,
-                name=settings.name,
-                name_trigger=name_trigger,
-            )
-        )
+    #     if not meeting_url:
+    #         msg = (
+    #             "Meeting URL is required when running as a client. "
+    #             "Please provide it as an argument."
+    #         )
+    #         raise click.UsageError(msg)
+    #     asyncio.run(
+    #         joinly_client.run(
+    #             joinly_url=mcp,
+    #             meeting_url=meeting_url,
+    #             llm_provider=llm_provider,
+    #             llm_model=llm_model,
+    #             prompt=prompt,
+    #             prompt_style=prompt_style,
+    #             name=settings.name,
+    #             name_trigger=name_trigger,
+    #         )
+    #     )
 
 
 if __name__ == "__main__":
