@@ -60,6 +60,7 @@ case $COMMAND in
     start)
         echo "🏗️  Building and starting services..."
         docker compose up -d --build
+        docker compose restart joinly-core # in-case agents are not switched off before rebuilding backend, this would kill them instantly
         echo ""
         echo "✅ Services started!"
         echo ""
