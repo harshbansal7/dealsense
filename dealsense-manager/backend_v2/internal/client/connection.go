@@ -180,10 +180,8 @@ func (c *JoinlyClient) Start() error {
 		return fmt.Errorf("failed to start MCP client: %w", err)
 	}
 
-	c.log("info", "MCP client started successfully")
-
 	c.log("debug", "Initializing MCP client...")
-	r, err := c.client.Initialize(c.ctx, mcp.InitializeRequest{
+	_, err = c.client.Initialize(c.ctx, mcp.InitializeRequest{
 		Params: mcp.InitializeParams{
 			ProtocolVersion: "2024-11-05",
 			Capabilities: mcp.ClientCapabilities{
@@ -196,8 +194,6 @@ func (c *JoinlyClient) Start() error {
 		},
 	})
 
-	c.log("debug", fmt.Sprintf("Initialize result: %v", r))
-
 	if err != nil {
 		c.log("error", fmt.Sprintf("Failed to initialize MCP client: %v", err))
 		c.isRunning = false
@@ -207,8 +203,6 @@ func (c *JoinlyClient) Start() error {
 		}
 		return fmt.Errorf("failed to initialize MCP client: %w", err)
 	}
-
-	c.log("debug", fmt.Sprintf("Initialize result: %v", r))
 
 	c.log("info", "MCP client initialized successfully")
 

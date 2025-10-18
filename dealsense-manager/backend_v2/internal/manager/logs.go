@@ -51,13 +51,6 @@ func (m *AgentManager) addLogEntry(agentID, level, message string) {
 		Message:   message,
 	}
 
-	m.addLogEntryUnsafe(agentID, entry)
-
-	// Note: Logs are now fetched via polling API, not WebSocket to avoid conflicts
-}
-
-// addLogEntryUnsafe adds a log entry without acquiring mutex (caller must hold mutex)
-func (m *AgentManager) addLogEntryUnsafe(agentID string, entry models.LogEntry) {
 	logs := m.logBuffers[agentID]
 	logs = append(logs, entry)
 
@@ -77,4 +70,3 @@ func (m *AgentManager) addLogEntryUnsafe(agentID string, entry models.LogEntry) 
 		}
 	}
 }
-

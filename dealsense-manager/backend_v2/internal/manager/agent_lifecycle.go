@@ -52,12 +52,7 @@ func (m *AgentManager) CreateAgent(config models.AgentConfig) (*models.Agent, er
 	m.meetings[meetingURL].AgentIDs = append(m.meetings[meetingURL].AgentIDs, agentID)
 	m.meetings[meetingURL].AgentCount++
 
-	m.addLogEntryUnsafe(agentID, models.LogEntry{
-		Timestamp: time.Now(),
-		Level:     "info",
-		Message:   fmt.Sprintf("Agent created for meeting: %s", meetingURL),
-	})
-
+	m.addLogEntry(agentID, "info", fmt.Sprintf("Agent created for meeting: %s", meetingURL))
 	logrus.Infof("Created agent %s for meeting %s", agentID, meetingURL)
 
 	return agent, nil

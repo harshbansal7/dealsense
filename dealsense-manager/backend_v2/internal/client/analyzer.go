@@ -70,6 +70,252 @@ type TopicDiscussion struct {
 	Participants []string `json:"participants"`
 }
 
+// PromptBuilder handles construction of LLM prompts for different analysis types
+type PromptBuilder struct {
+	customInstructions *string
+}
+
+// NewPromptBuilder creates a new prompt builder with optional custom instructions
+func NewPromptBuilder(customInstructions *string) *PromptBuilder {
+	return &PromptBuilder{
+		customInstructions: customInstructions,
+	}
+}
+
+// BuildSummaryPrompt creates a prompt for meeting summary generation
+func (pb *PromptBuilder) BuildSummaryPrompt(transcript, oldSummary string, useGrounding bool) string {
+	var prompt strings.Builder
+
+	// Base instructions for summary generation
+	prompt.WriteString("Analyze this meeting transcript and provide a comprehensive summary.\n\n")
+	prompt.WriteString("Focus on:\n")
+	prompt.WriteString("- Main topics discussed\n")
+	prompt.WriteString("- Key decisions made\n")
+	prompt.WriteString("- Important information shared\n")
+	prompt.WriteString("- Overall meeting progress and outcomes\n")
+
+	// Add grounding instructions if enabled
+	if useGrounding {
+		prompt.WriteString("- Validation of any claims, facts, or figures mentioned\n\n")
+		prompt.WriteString("IMPORTANT: For any factual statements, statistics, company data, technical specifications, or verifiable claims mentioned in the meeting:\n")
+		prompt.WriteString("1. Use google_search to verify the accuracy\n")
+		prompt.WriteString("2. Cross-reference multiple sources when possible\n")
+		prompt.WriteString("3. Note if information cannot be verified or appears outdated\n")
+		prompt.WriteString("4. Include relevant context from your search results\n")
+	}
+
+	// Add custom instructions (agent personality)
+	if pb.customInstructions != nil && *pb.customInstructions != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nAgent Personality: %s\n", *pb.customInstructions))
+		prompt.WriteString("Apply this expertise and perspective throughout your analysis.\n")
+	}
+
+	// Add previous summary context if available
+	if oldSummary != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nPrevious Summary Context:\n%s\n", oldSummary))
+		prompt.WriteString("Build upon and update this previous summary with new information from the recent transcript.\n")
+	}
+
+	// Add transcript
+	prompt.WriteString(fmt.Sprintf("\n\nRecent Transcript:\n%s\n", transcript))
+
+	// Response format
+	prompt.WriteString("\nProvide your response in the following JSON format:\n")
+	prompt.WriteString("```\n")
+	prompt.WriteString("{\n")
+	prompt.WriteString("  \"summary\": \"Your comprehensive summary here\",\n")
+	prompt.WriteString("  \"key_themes\": [\"theme1\", \"theme2\", \"theme3\"]\n")
+	prompt.WriteString("}\n")
+	prompt.WriteString("```")
+
+	return prompt.String()
+}
+
+// BuildKeyPointsPrompt creates a prompt for key points extraction
+func (pb *PromptBuilder) BuildKeyPointsPrompt(transcript, oldSummary string, useGrounding bool) string {
+	var prompt strings.Builder
+
+	// Base instructions for key points extraction
+	prompt.WriteString("Extract the key points from this meeting transcript.\n\n")
+	prompt.WriteString("Focus on:\n")
+	prompt.WriteString("- Important decisions or agreements\n")
+	prompt.WriteString("- Critical information shared\n")
+	prompt.WriteString("- Action-oriented statements\n")
+	prompt.WriteString("- Questions that need answers\n")
+	prompt.WriteString("- Commitments made\n")
+
+	// Add grounding instructions if enabled
+	if useGrounding {
+		prompt.WriteString("- Verifiable facts and data points\n")
+		prompt.WriteString("Use google_search to validate any factual claims mentioned.\n")
+	}
+
+	// Add custom instructions (agent personality)
+	if pb.customInstructions != nil && *pb.customInstructions != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nAgent Personality: %s\n", *pb.customInstructions))
+		prompt.WriteString("Apply this expertise and analytical style to identify the most relevant key points.\n")
+	}
+
+	// Add previous summary context if available
+	if oldSummary != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nPrevious Summary Context:\n%s\n", oldSummary))
+		prompt.WriteString("Identify key points that build upon or update this previous context.\n")
+	}
+
+	// Add transcript
+	prompt.WriteString(fmt.Sprintf("\n\nRecent Transcript:\n%s\n", transcript))
+
+	// Response format
+	prompt.WriteString("\nProvide your response in the following JSON format:\n")
+	prompt.WriteString("```\n")
+	prompt.WriteString("{\n")
+	prompt.WriteString("  \"key_points\": [\"point1\", \"point2\", \"point3\"]\n")
+	prompt.WriteString("}\n")
+	prompt.WriteString("```")
+
+	return prompt.String()
+}
+
+// BuildActionItemsPrompt creates a prompt for actionable items identification
+func (pb *PromptBuilder) BuildActionItemsPrompt(transcript, oldSummary string, useGrounding bool) string {
+	var prompt strings.Builder
+
+	// Base instructions for action items
+	prompt.WriteString("Identify action items from this meeting transcript. Be aggressive in finding actionables - look beyond explicit tasks to identify research opportunities, follow-ups, and valuable investigations.\n\n")
+	prompt.WriteString("Look for:\n")
+	prompt.WriteString("- Explicit tasks that need to be completed\n")
+	prompt.WriteString("- Follow-ups required from discussions\n")
+	prompt.WriteString("- Decisions that need implementation\n")
+	prompt.WriteString("- Assignments given to specific people\n")
+	prompt.WriteString("- Deadlines mentioned\n")
+	prompt.WriteString("- Research opportunities mentioned or implied\n")
+	prompt.WriteString("- Unresolved questions that need investigation\n")
+	prompt.WriteString("- Topics that participants showed interest in exploring further\n")
+	prompt.WriteString("- Problems or challenges that need solutions\n")
+	prompt.WriteString("- Ideas worth developing or validating\n")
+	prompt.WriteString("- Market research, competitive analysis, or data gathering needs\n")
+	prompt.WriteString("- Technical investigations or proof-of-concepts to build\n")
+	prompt.WriteString("- Stakeholder consultations or expert opinions to seek\n")
+	prompt.WriteString("- Tools, processes, or systems to evaluate\n")
+	prompt.WriteString("- Industry trends or best practices to research\n\n")
+	prompt.WriteString("EVEN IF NO EXPLICIT TASKS ARE MENTIONED, identify valuable research directions, learning opportunities, or investigative actions that would benefit the participants based on their discussions.\n\n")
+
+	// Add custom instructions (agent personality)
+	if pb.customInstructions != nil && *pb.customInstructions != "" {
+		prompt.WriteString(fmt.Sprintf("Agent Personality: %s\n", *pb.customInstructions))
+		prompt.WriteString("Apply this expertise to identify the most valuable and relevant action items for this type of professional.\n\n")
+	}
+
+	// Add previous summary context if available
+	if oldSummary != "" {
+		prompt.WriteString(fmt.Sprintf("Previous Summary Context:\n%s\n", oldSummary))
+		prompt.WriteString("Identify action items that build upon or address gaps in this previous context.\n\n")
+	}
+
+	// Add transcript
+	prompt.WriteString(fmt.Sprintf("Recent Transcript:\n%s\n", transcript))
+
+	// Response format
+	prompt.WriteString("\nFor each action item, specify the description, assignee, priority, and type.\n\n")
+	prompt.WriteString("Provide your response in the following JSON format:\n")
+	prompt.WriteString("```\n")
+	prompt.WriteString("{\n")
+	prompt.WriteString("  \"action_items\": [\n")
+	prompt.WriteString("    {\n")
+	prompt.WriteString("      \"description\": \"Task description\",\n")
+	prompt.WriteString("      \"assignee\": \"Person name or role\",\n")
+	prompt.WriteString("      \"priority\": \"high/medium/low\",\n")
+	prompt.WriteString("      \"type\": \"task/research/investigation/follow-up/decision\"\n")
+	prompt.WriteString("    }\n")
+	prompt.WriteString("  ]\n")
+	prompt.WriteString("}\n")
+	prompt.WriteString("```")
+
+	return prompt.String()
+}
+
+// BuildTopicsPrompt creates a prompt for discussion topics identification
+func (pb *PromptBuilder) BuildTopicsPrompt(transcript, oldSummary string, useGrounding bool) string {
+	var prompt strings.Builder
+
+	// Base instructions for topics identification
+	prompt.WriteString("Analyze this meeting transcript and identify the main discussion topics.\n\n")
+	prompt.WriteString("For each topic, provide:\n")
+	prompt.WriteString("- Topic name/title\n")
+	prompt.WriteString("- Brief summary of what was discussed\n")
+	prompt.WriteString("- Key participants involved\n")
+	prompt.WriteString("- Approximate start time and duration\n")
+
+	// Add custom instructions (agent personality)
+	if pb.customInstructions != nil && *pb.customInstructions != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nAgent Personality: %s\n", *pb.customInstructions))
+		prompt.WriteString("Apply this expertise to categorize and analyze the discussion topics.\n")
+	}
+
+	// Add previous summary context if available
+	if oldSummary != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nPrevious Summary Context:\n%s\n", oldSummary))
+		prompt.WriteString("Identify how these topics build upon or diverge from previous discussions.\n")
+	}
+
+	// Add transcript
+	prompt.WriteString(fmt.Sprintf("\n\nRecent Transcript:\n%s\n", transcript))
+
+	// Response format
+	prompt.WriteString("\nProvide your response in the following JSON format:\n")
+	prompt.WriteString("```\n")
+	prompt.WriteString("{\n")
+	prompt.WriteString("  \"topics\": [\n")
+	prompt.WriteString("    {\n")
+	prompt.WriteString("      \"topic\": \"Topic name\",\n")
+	prompt.WriteString("      \"summary\": \"Brief summary of discussion\",\n")
+	prompt.WriteString("      \"participants\": [\"Speaker1\", \"Speaker2\"],\n")
+	prompt.WriteString("      \"start_time\": \"HH:MM\",\n")
+	prompt.WriteString("      \"duration_minutes\": 15\n")
+	prompt.WriteString("    }\n")
+	prompt.WriteString("  ]\n")
+	prompt.WriteString("}\n")
+	prompt.WriteString("```")
+
+	return prompt.String()
+}
+
+// BuildSentimentPrompt creates a prompt for sentiment analysis and keyword extraction
+func (pb *PromptBuilder) BuildSentimentPrompt(transcript, oldSummary string, useGrounding bool) string {
+	var prompt strings.Builder
+
+	// Base instructions for sentiment analysis
+	prompt.WriteString("Analyze the sentiment and extract important keywords from this meeting transcript.\n\n")
+	prompt.WriteString("Determine the overall sentiment of the discussion and identify the most important keywords and phrases.\n")
+
+	// Add custom instructions (agent personality)
+	if pb.customInstructions != nil && *pb.customInstructions != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nAgent Personality: %s\n", *pb.customInstructions))
+		prompt.WriteString("Apply this expertise to analyze the sentiment and identify relevant keywords.\n")
+	}
+
+	// Add previous summary context if available
+	if oldSummary != "" {
+		prompt.WriteString(fmt.Sprintf("\n\nPrevious Summary Context:\n%s\n", oldSummary))
+		prompt.WriteString("Consider how the sentiment and keywords relate to previous discussions.\n")
+	}
+
+	// Add transcript
+	prompt.WriteString(fmt.Sprintf("\n\nRecent Transcript:\n%s\n", transcript))
+
+	// Response format
+	prompt.WriteString("\nProvide your response in the following JSON format:\n")
+	prompt.WriteString("```\n")
+	prompt.WriteString("{\n")
+	prompt.WriteString("  \"sentiment\": \"positive/negative/neutral/mixed\",\n")
+	prompt.WriteString("  \"keywords\": [\"keyword1\", \"keyword2\", \"keyword3\"],\n")
+	prompt.WriteString("  \"confidence\": 0.85\n")
+	prompt.WriteString("}\n")
+	prompt.WriteString("```")
+
+	return prompt.String()
+}
+
 // AnalystAgent handles meeting analysis and maintains comprehensive meeting notes
 type AnalystAgent struct {
 	agentID                 string
@@ -82,6 +328,7 @@ type AnalystAgent struct {
 	lastAnalysis            time.Time
 	analysisMutex           sync.Mutex
 	currentAnalysisSnapshot []TranscriptEntry // Snapshot used during analysis to ensure consistency
+	promptBuilder           *PromptBuilder    // New prompt builder
 }
 
 // NewAnalystAgent creates a new analyst agent
@@ -103,11 +350,12 @@ func NewAnalystAgent(agentID string, config models.AgentConfig, llmClient *Joinl
 	}
 
 	analyst := &AnalystAgent{
-		agentID:     agentID,
-		config:      config,
-		filePath:    filePath,
-		llmClient:   llmClient,
-		llmProvider: llmProvider,
+		agentID:       agentID,
+		config:        config,
+		filePath:      filePath,
+		llmClient:     llmClient,
+		llmProvider:   llmProvider,
+		promptBuilder: NewPromptBuilder(config.CustomPrompt),
 		data: &AnalysisData{
 			MeetingID:    agentID,
 			MeetingURL:   config.MeetingURL,
@@ -274,34 +522,16 @@ func (a *AnalystAgent) generateSummary() error {
 
 	logrus.Infof("Agent %s: Generating summary with %d transcript entries", a.agentID, len(transcript))
 
-	// Use custom prompt if provided, otherwise use default
-	prompt := a.buildAnalysisPrompt("summary",
-		`Analyze this meeting transcript and provide a comprehensive summary. You MUST use the google_search tool to validate and verify any factual claims, statistics, figures, technical details, company information, or specific statements that can be fact-checked.
+	// Check if grounding is available
+	useGrounding := a.llmProvider != nil && a.llmProvider.IsAvailable() &&
+		func() bool {
+			_, ok := a.llmProvider.(llm.GroundingCapableProvider)
+			return ok
+		}()
 
-		Focus on:
-		- Main topics discussed
-		- Key decisions made  
-		- Important information shared
-		- Overall meeting progress and outcomes
-		- Validation of any claims, facts, or figures mentioned
-
-		IMPORTANT: For any factual statements, statistics, company data, technical specifications, or verifiable claims mentioned in the meeting:
-		1. Use google_search to verify the accuracy
-		2. Cross-reference multiple sources when possible
-		3. Note if information cannot be verified or appears outdated
-		4. Include relevant context from your search results
-
-		Transcript:
-		%s
-
-		Provide your response in the following JSON format within a code block:
-		`+"`"+`json
-		{
-			"summary": "Your comprehensive summary here with validated facts and verified information",
-			"key_themes": ["theme1", "theme2", "theme3"]
-		}
-		`+"`"+``,
-		a.formatTranscriptForLLM(transcript))
+	// Build prompt using the new prompt builder
+	formattedTranscript := a.formatTranscriptForLLM(transcript)
+	prompt := a.promptBuilder.BuildSummaryPrompt(formattedTranscript, a.data.Summary, useGrounding)
 
 	// Try grounded call first if provider supports it
 	if groundingProvider, ok := a.llmProvider.(llm.GroundingCapableProvider); ok {
@@ -352,32 +582,16 @@ func (a *AnalystAgent) extractKeyPoints() error {
 
 	logrus.Infof("Agent %s: Extracting key points with %d transcript entries", a.agentID, len(transcript))
 
-	// Use custom prompt if provided, otherwise use default
-	prompt := a.buildAnalysisPrompt("key_points",
-		`Extract the key points from this meeting transcript. Focus on:
-- Important decisions or agreements
-- Critical information shared
-- Action-oriented statements
-- Questions that need answers
-- Commitments made
+	// Check if grounding is available
+	useGrounding := a.llmProvider != nil && a.llmProvider.IsAvailable() &&
+		func() bool {
+			_, ok := a.llmProvider.(llm.GroundingCapableProvider)
+			return ok
+		}()
 
-Provide the most important takeaways from the discussion.
-
-Transcript:
-%s
-
-Provide your response in the following JSON format within a code block:
-`+"`"+`json
-{
-  "key_points": ["point1", "point2", "point3"]
-}
-`+"`"+``,
-		a.formatTranscriptForLLM(transcript))
-
-	// Log the transcript being sent
+	// Build prompt using the new prompt builder
 	formattedTranscript := a.formatTranscriptForLLM(transcript)
-	logrus.Debugf("Agent %s: Sending %d characters of transcript to LLM for key points",
-		a.agentID, len(formattedTranscript))
+	prompt := a.promptBuilder.BuildKeyPointsPrompt(formattedTranscript, a.data.Summary, useGrounding)
 
 	// Try grounded call first if provider supports it
 	if groundingProvider, ok := a.llmProvider.(llm.GroundingCapableProvider); ok {
@@ -425,64 +639,9 @@ func (a *AnalystAgent) identifyActionItems() error {
 
 	logrus.Infof("Agent %s: Identifying action items with %d transcript entries", a.agentID, len(transcript))
 
-	// Use custom prompt if provided, otherwise use default
-	prompt := a.buildAnalysisPrompt("action_items",
-		`Identify action items from this meeting transcript. Be VERY AGGRESSIVE in finding actionables - look beyond explicit tasks to identify research opportunities, follow-ups, and valuable investigations.
-
-Look for:
-- Explicit tasks that need to be completed
-- Follow-ups required from discussions
-- Decisions that need implementation
-- Assignments given to specific people
-- Deadlines mentioned
-- Research opportunities mentioned or implied
-- Unresolved questions that need investigation
-- Topics that participants showed interest in exploring further
-- Problems or challenges that need solutions
-- Ideas worth developing or validating
-- Market research, competitive analysis, or data gathering needs
-- Technical investigations or proof-of-concepts to build
-- Stakeholder consultations or expert opinions to seek
-- Tools, processes, or systems to evaluate
-- Industry trends or best practices to research
-
-For discussions about personalities, roles, or team dynamics:
-- Research specific methodologies, frameworks, or tools mentioned
-- Investigate industry best practices for team challenges discussed
-- Find case studies or examples relevant to situations discussed
-- Look up experts, books, or resources that could help
-
-EVEN IF NO EXPLICIT TASKS ARE MENTIONED, identify valuable research directions, learning opportunities, or investigative actions that would benefit the participants based on their discussions.
-
-For each action item, identify:
-- Description of what needs to be done
-- Who is responsible (if mentioned, otherwise suggest who might be best suited)
-- Priority level (high/medium/low) based on urgency and importance
-- Due date (if mentioned, otherwise suggest reasonable timeframe)
-- Type: task/research/investigation/follow-up/decision
-
-Transcript:
-%s
-
-Provide your response in the following JSON format within a code block:
-`+"`"+`json
-{
-  "action_items": [
-    {
-      "description": "Task description - be specific about what needs to be researched/done/investigated",
-      "assignee": "Person name (optional) or use 'Reviewer'",
-      "priority": "high (try to not use high until very necessary) / medium / low",
-      "type": "task/research/investigation/follow-up/decision"
-    }
-  ]
-}
-`+"`"+``,
-		a.formatTranscriptForLLM(transcript))
-
-	// Log the transcript being sent
+	// Build prompt using the new prompt builder
 	formattedTranscript := a.formatTranscriptForLLM(transcript)
-	logrus.Debugf("Agent %s: Sending %d characters of transcript to LLM for action items",
-		a.agentID, len(formattedTranscript))
+	prompt := a.promptBuilder.BuildActionItemsPrompt(formattedTranscript, a.data.Summary, false)
 
 	response, err := a.callLLM(prompt)
 	if err != nil {
@@ -523,32 +682,9 @@ func (a *AnalystAgent) extractTopics() error {
 		return nil
 	}
 
-	// Use custom prompt if provided, otherwise use default
-	prompt := a.buildAnalysisPrompt("topics",
-		`Analyze this meeting transcript and identify the main discussion topics. For each topic, provide:
-- Topic name/title
-- Brief summary of what was discussed
-- Key participants involved
-- Approximate start time and duration
-
-Transcript:
-%s
-
-Provide your response in the following JSON format within a code block:
-`+"`"+`json
-{
-  "topics": [
-    {
-      "topic": "Topic name",
-      "summary": "Brief summary of discussion",
-      "participants": ["Speaker1", "Speaker2"],
-      "start_time": "HH:MM",
-      "duration_minutes": 15
-    }
-  ]
-}
-`+"`"+``,
-		a.formatTranscriptForLLM(transcript))
+	// Build prompt using the new prompt builder
+	formattedTranscript := a.formatTranscriptForLLM(transcript)
+	prompt := a.promptBuilder.BuildTopicsPrompt(formattedTranscript, a.data.Summary, false)
 
 	response, err := a.callLLM(prompt)
 	if err != nil {
@@ -580,24 +716,9 @@ func (a *AnalystAgent) analyzeSentimentAndKeywords() error {
 		return nil
 	}
 
-	// Use custom prompt if provided, otherwise use default
-	prompt := a.buildAnalysisPrompt("sentiment_keywords",
-		`Analyze the sentiment and extract keywords from this meeting transcript.
-
-Determine the overall sentiment of the discussion and identify the most important keywords and phrases.
-
-Transcript:
-%s
-
-Provide your response in the following JSON format within a code block:
-`+"`"+`json
-{
-  "sentiment": "positive/negative/neutral/mixed",
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "confidence": 0.85
-}
-`+"`"+``,
-		a.formatTranscriptForLLM(transcript))
+	// Build prompt using the new prompt builder
+	formattedTranscript := a.formatTranscriptForLLM(transcript)
+	prompt := a.promptBuilder.BuildSentimentPrompt(formattedTranscript, a.data.Summary, false)
 
 	response, err := a.callLLM(prompt)
 	if err != nil {
@@ -721,343 +842,6 @@ func (a *AnalystAgent) formatTranscriptForLLM(entries []TranscriptEntry) string 
 	}
 	return result.String()
 }
-
-// buildAnalysisPrompt builds a secure prompt for analysis using custom instructions
-func (a *AnalystAgent) buildAnalysisPrompt(analysisType, defaultPrompt, transcript string) string {
-	// Check if custom prompt is set - if so, use custom prompt-driven prompts
-	if a.config.CustomPrompt != nil && *a.config.CustomPrompt != "" {
-		return a.buildSecurePromptFromInstructions(analysisType, *a.config.CustomPrompt, transcript)
-	}
-
-	// Use default prompt if no custom instructions
-	return fmt.Sprintf(defaultPrompt, transcript)
-}
-
-// buildSecurePromptFromInstructions creates task-specific prompts based on custom instructions
-func (a *AnalystAgent) buildSecurePromptFromInstructions(analysisType, customInstructions, transcript string) string {
-	// Get custom prompt from agent config
-	customPrompt := a.config.CustomPrompt
-	if customPrompt == nil || *customPrompt == "" {
-		// Fall back to direct instruction insertion if no custom prompt is set
-		return a.buildDirectPrompt(analysisType, customInstructions, transcript)
-	}
-
-	// Basic validation for harmful content in custom prompt
-	if !a.isSafeInstruction(*customPrompt) {
-		logrus.Warnf("Potentially harmful custom prompt detected, using default prompt")
-		return a.getDefaultPrompt(analysisType, transcript)
-	}
-
-	// Generate task-specific prompt based on custom instructions
-	taskPrompt, err := a.generateTaskPromptFromCustomInstructions(analysisType, *customPrompt)
-	if err != nil {
-		logrus.Warnf("Failed to generate task prompt from custom instructions, falling back to direct: %v", err)
-		return a.buildDirectPrompt(analysisType, customInstructions, transcript)
-	}
-
-	// Build final prompt with generated task instructions
-	var basePrompt string
-
-	switch analysisType {
-	case "summary":
-		basePrompt = fmt.Sprintf(`%s
-
-Based on your expertise and role described above, analyze this meeting transcript and provide a comprehensive summary.
-
-Transcript:
-%s`, taskPrompt, transcript)
-
-	case "key_points":
-		basePrompt = fmt.Sprintf(`%s
-
-Based on your expertise and role described above, extract the most important key points from this meeting transcript.
-
-Transcript:
-%s`, taskPrompt, transcript)
-
-	case "action_items":
-		basePrompt = fmt.Sprintf(`%s
-
-Based on your expertise and role described above, identify all actionable items from this meeting transcript.
-
-For each action item, specify:
-- Description of what needs to be done
-- Who is responsible (if mentioned)
-- Priority level (high/medium/low)
-- Due date (if mentioned)
-
-Transcript:
-%s`, taskPrompt, transcript)
-
-	case "topics":
-		basePrompt = fmt.Sprintf(`%s
-
-Based on your expertise and role described above, analyze this meeting transcript and identify the main discussion topics.
-
-For each topic, provide:
-- Topic name/title
-- Brief summary of what was discussed
-- Key participants involved
-- Approximate start time and duration
-
-Transcript:
-%s`, taskPrompt, transcript)
-
-	case "sentiment_keywords":
-		basePrompt = fmt.Sprintf(`%s
-
-Based on your expertise and role described above, analyze the sentiment and extract important keywords from this meeting transcript.
-
-Determine the overall sentiment and identify key themes and important terms.
-
-Transcript:
-%s`, taskPrompt, transcript)
-
-	default:
-		return a.getDefaultPrompt(analysisType, transcript)
-	}
-
-	logrus.Debugf("Built custom prompt-driven %s prompt", analysisType)
-	return basePrompt
-}
-
-// buildDirectPrompt creates a prompt by directly inserting client instructions (fallback)
-func (a *AnalystAgent) buildDirectPrompt(analysisType, clientInstructions, transcript string) string {
-	// Basic validation for harmful content
-	if !a.isSafeInstruction(clientInstructions) {
-		logrus.Warnf("Potentially harmful instruction detected, using default prompt")
-		return a.getDefaultPrompt(analysisType, transcript)
-	}
-
-	// Build prompt by directly inserting instructions into base template
-	var basePrompt string
-
-	switch analysisType {
-	case "summary":
-		basePrompt = fmt.Sprintf(`Analyze this meeting transcript and provide a comprehensive summary.
-
-Additional Instructions: %s
-
-Transcript:
-%s`, clientInstructions, transcript)
-
-	case "key_points":
-		basePrompt = fmt.Sprintf(`Extract the most important key points from this meeting transcript.
-
-Additional Instructions: %s
-
-Transcript:
-%s`, clientInstructions, transcript)
-
-	case "action_items":
-		basePrompt = fmt.Sprintf(`Identify all actionable items from this meeting transcript.
-
-Additional Instructions: %s
-
-For each action item, specify:
-- Description of what needs to be done
-- Who is responsible (if mentioned)
-- Priority level (high/medium/low)
-- Due date (if mentioned)
-
-Transcript:
-%s`, clientInstructions, transcript)
-
-	case "topics":
-		basePrompt = fmt.Sprintf(`Analyze this meeting transcript and identify the main discussion topics.
-
-Additional Instructions: %s
-
-For each topic, provide:
-- Topic name/title
-- Brief summary of what was discussed
-- Key participants involved
-- Approximate start time and duration
-
-Transcript:
-%s`, clientInstructions, transcript)
-
-	case "sentiment_keywords":
-		basePrompt = fmt.Sprintf(`Analyze the sentiment and extract important keywords from this meeting transcript.
-
-Additional Instructions: %s
-
-Determine the overall sentiment and identify key themes and important terms.
-
-Transcript:
-%s`, clientInstructions, transcript)
-
-	default:
-		return a.getDefaultPrompt(analysisType, transcript)
-	}
-
-	logrus.Debugf("Built direct %s prompt with client instructions", analysisType)
-	return basePrompt
-}
-
-// generateTaskPromptFromCustomInstructions uses LLM to generate task-specific instructions based on custom prompt
-func (a *AnalystAgent) generateTaskPromptFromCustomInstructions(analysisType, customInstructions string) (string, error) {
-	var taskDescription string
-
-	switch analysisType {
-	case "summary":
-		taskDescription = "creating comprehensive meeting summaries"
-	case "key_points":
-		taskDescription = "extracting key points and important takeaways"
-	case "action_items":
-		taskDescription = "identifying actionable items and next steps"
-	case "topics":
-		taskDescription = "analyzing discussion topics and themes"
-	case "sentiment_keywords":
-		taskDescription = "analyzing sentiment and extracting keywords"
-	default:
-		taskDescription = "analyzing meeting content"
-	}
-
-	prompt := fmt.Sprintf(`Given this role description for an analyst agent:
-
-%s
-
-Generate specific instructions for how this agent should approach %s in meetings. Focus on their expertise, experience level, analytical style, and specific methodologies they should use. Provide clear, actionable guidance that captures their unique approach to this type of analysis.
-
-Keep the response focused and professional, as these instructions will be used directly in LLM prompts.`, customInstructions, taskDescription)
-
-	// Use the same LLM provider as configured for the agent
-	response, err := a.llmProvider.Call(prompt)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate task prompt: %w", err)
-	}
-
-	// Clean up the response
-	taskPrompt := strings.TrimSpace(response)
-	if taskPrompt == "" {
-		return "", fmt.Errorf("empty task prompt generated")
-	}
-
-	return taskPrompt, nil
-}
-
-// isSafeInstruction performs basic validation for harmful content
-func (a *AnalystAgent) isSafeInstruction(instructions string) bool {
-	// Basic length check
-	if len(instructions) > 5000 {
-		return false
-	}
-
-	// Check for obviously harmful patterns
-	harmfulPatterns := []string{
-		"<script", "javascript:", "eval(", "function(",
-		"import ", "require(", "exec(", "system(",
-		"rm ", "del ", "format ", "drop table",
-		"alter table", "truncate table",
-	}
-
-	instructionsLower := strings.ToLower(instructions)
-	for _, pattern := range harmfulPatterns {
-		if strings.Contains(instructionsLower, pattern) {
-			logrus.Warnf("Potentially harmful pattern detected: %s", pattern)
-			return false
-		}
-	}
-
-	return true
-}
-
-// getDefaultPrompt returns the default prompt for an analysis type
-func (a *AnalystAgent) getDefaultPrompt(analysisType, transcript string) string {
-	switch analysisType {
-	case "summary":
-		return fmt.Sprintf(`Analyze this meeting transcript and provide a comprehensive summary. You MUST use the google_search tool to validate and verify any factual claims, statistics, figures, technical details, company information, or specific statements that can be fact-checked.
-
-Focus on:
-- Main topics discussed
-- Key decisions made
-- Important information shared
-- Overall meeting progress and outcomes
-- Validation of any claims, facts, or figures mentioned
-
-IMPORTANT: For any factual statements, statistics, company data, technical specifications, or verifiable claims mentioned in the meeting:
-1. Use google_search to verify the accuracy
-2. Cross-reference multiple sources when possible
-3. Note if information cannot be verified or appears outdated
-4. Include relevant context from your search results
-
-Transcript:
-%s`, transcript)
-
-	case "key_points":
-		return fmt.Sprintf(`Extract the most important key points from this meeting transcript. Focus on:
-- Important decisions or agreements
-- Critical information shared
-- Action-oriented statements
-- Questions that need answers
-- Commitments made
-
-Transcript:
-%s`, transcript)
-
-	case "action_items":
-		return fmt.Sprintf(`Identify action items from this meeting transcript. Be VERY AGGRESSIVE in finding actionables - look beyond explicit tasks to identify research opportunities, follow-ups, and valuable investigations.
-
-Look for:
-- Explicit tasks that need to be completed
-- Follow-ups required from discussions
-- Decisions that need implementation
-- Assignments given to specific people
-- Deadlines mentioned
-- Research opportunities mentioned or implied
-- Unresolved questions that need investigation
-- Topics that participants showed interest in exploring further
-- Problems or challenges that need solutions
-- Ideas worth developing or validating
-- Market research, competitive analysis, or data gathering needs
-- Technical investigations or proof-of-concepts to build
-- Stakeholder consultations or expert opinions to seek
-- Tools, processes, or systems to evaluate
-- Industry trends or best practices to research
-
-For discussions about personalities, roles, or team dynamics:
-- Research specific methodologies, frameworks, or tools mentioned
-- Investigate industry best practices for team challenges discussed
-- Find case studies or examples relevant to situations discussed
-- Look up experts, books, or resources that could help
-
-EVEN IF NO EXPLICIT TASKS ARE MENTIONED, identify valuable research directions, learning opportunities, or investigative actions that would benefit the participants based on their discussions.
-
-For each action item, specify:
-- Description of what needs to be done
-- Who is responsible (if mentioned, otherwise suggest who might be best suited)
-- Priority level (high/medium/low) based on urgency and importance
-- Due date (if mentioned, otherwise suggest reasonable timeframe)
-- Type: task/research/investigation/follow-up/decision
-
-Transcript:
-%s`, transcript)
-
-	case "topics":
-		return fmt.Sprintf(`Analyze this meeting transcript and identify the main discussion topics. For each topic, provide:
-- Topic name/title
-- Brief summary of what was discussed
-- Key participants involved
-- Approximate start time and duration
-
-Transcript:
-%s`, transcript)
-
-	case "sentiment_keywords":
-		return fmt.Sprintf(`Analyze the sentiment and extract keywords from this meeting transcript.
-
-Determine the overall sentiment of the discussion and identify the most important keywords and phrases.
-
-Transcript:
-%s`, transcript)
-
-	default:
-		return fmt.Sprintf("Analyze this meeting transcript and provide insights.\n\nTranscript:\n%s", transcript)
-	}
-}
-
-// File operations
 
 // processSummaryWithGrounding processes a grounded response for summary generation
 func (a *AnalystAgent) processSummaryWithGrounding(groundedResponse *llm.GroundedResponse) error {

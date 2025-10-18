@@ -44,6 +44,7 @@ type LoggingConfig struct {
 	Level   string               `yaml:"level"`
 	Format  string               `yaml:"format"`
 	Discord DiscordWebhookConfig `yaml:"discord"`
+	File    FileLoggerConfig     `yaml:"file"`
 }
 
 // DiscordWebhookConfig holds the configuration for Discord webhooks
@@ -56,6 +57,20 @@ type DiscordWebhookConfig struct {
 	Enabled       bool   `yaml:"enabled"`
 	GeminiEnabled bool   `yaml:"gemini_enabled"`
 	Username      string `yaml:"username"`
+}
+
+// FileLoggerConfig holds the configuration for file logging
+type FileLoggerConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Path     string `yaml:"path"`
+	MaxSize  int64  `yaml:"max_size_mb"` // Max size in MB before rotation
+	MaxFiles int    `yaml:"max_files"`   // Max number of rotated files to keep
+}
+
+// FileLoggerHook is a logrus hook for writing logs to files
+type FileLoggerHook struct {
+	config FileLoggerConfig
+	file   *os.File
 }
 
 // DiscordHook is a logrus hook for sending logs to Discord webhooks
@@ -111,26 +126,8 @@ func (hook *DiscordHook) Levels() []logrus.Level {
 		return []logrus.Level{}
 	}
 
-	levels := []logrus.Level{}
-	if hook.config.InfoWebhook != "" {
-		levels = append(levels, logrus.InfoLevel)
-	}
-	if hook.config.WarnWebhook != "" {
-		levels = append(levels, logrus.WarnLevel)
-	}
-	if hook.config.ErrorWebhook != "" {
-		levels = append(levels, logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel)
-	}
-	if hook.config.DebugWebhook != "" {
-		levels = append(levels, logrus.DebugLevel, logrus.TraceLevel)
-	}
-
-	// Add InfoLevel for Gemini logging if Gemini webhook is configured
-	if hook.config.GeminiWebhook != "" && hook.config.GeminiEnabled {
-		levels = append(levels, logrus.InfoLevel)
-	}
-
-	return levels
+	// Only log InfoLevel messages to Discord
+	return []logrus.Level{logrus.InfoLevel}
 }
 
 // Fire sends the log entry to the appropriate Discord webhook
@@ -150,26 +147,19 @@ func (hook *DiscordHook) Fire(entry *logrus.Entry) error {
 
 // getWebhookForLevel returns the appropriate webhook URL for the given log level
 func (hook *DiscordHook) getWebhookForLevel(level logrus.Level, entry *logrus.Entry) string {
-	// Check if this is a Gemini-specific log
+	// Since we only handle InfoLevel now, check for Gemini-specific logs first
 	if hook.config.GeminiEnabled && hook.config.GeminiWebhook != "" {
 		if message := entry.Message; strings.Contains(message, "Gemini") {
 			return hook.config.GeminiWebhook
 		}
 	}
 
-	// Default webhook selection by level
-	switch level {
-	case logrus.DebugLevel, logrus.TraceLevel:
-		return hook.config.DebugWebhook
-	case logrus.InfoLevel:
+	// For InfoLevel, use the InfoWebhook if configured
+	if level == logrus.InfoLevel && hook.config.InfoWebhook != "" {
 		return hook.config.InfoWebhook
-	case logrus.WarnLevel:
-		return hook.config.WarnWebhook
-	case logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel:
-		return hook.config.ErrorWebhook
-	default:
-		return ""
 	}
+
+	return ""
 }
 
 // createDiscordMessage creates a Discord message from a logrus entry
@@ -198,7 +188,7 @@ func (hook *DiscordHook) createDiscordMessage(entry *logrus.Entry) DiscordMessag
 			fieldValue := fmt.Sprintf("%v", value)
 			// Truncate long values
 			if len(fieldValue) > 1024 {
-				fieldValue = fieldValue[:1021] + "..."
+				fieldValue = fieldValue[:512] + "..." + fieldValue[len(fieldValue)-512:]
 			}
 
 			embed.Fields = append(embed.Fields, DiscordEmbedField{
@@ -273,6 +263,88 @@ func (hook *DiscordHook) sendToDiscord(webhookURL string, message DiscordMessage
 	return nil
 }
 
+// NewFileLoggerHook creates a new file logger hook
+func NewFileLoggerHook(config FileLoggerConfig) (*FileLoggerHook, error) {
+	if !config.Enabled {
+		return &FileLoggerHook{config: config}, nil
+	}
+
+	// Ensure the directory exists
+	dir := filepath.Dir(config.Path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create log directory: %w", err)
+	}
+
+	// Open the log file for appending
+	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open log file: %w", err)
+	}
+
+	return &FileLoggerHook{
+		config: config,
+		file:   file,
+	}, nil
+}
+
+// Levels returns all log levels for file logging
+func (hook *FileLoggerHook) Levels() []logrus.Level {
+	if !hook.config.Enabled {
+		return []logrus.Level{}
+	}
+	return []logrus.Level{
+		logrus.TraceLevel,
+		logrus.DebugLevel,
+		logrus.InfoLevel,
+		logrus.WarnLevel,
+		logrus.ErrorLevel,
+		logrus.FatalLevel,
+		logrus.PanicLevel,
+	}
+}
+
+// Fire writes the log entry to the file
+func (hook *FileLoggerHook) Fire(entry *logrus.Entry) error {
+	if !hook.config.Enabled || hook.file == nil {
+		return nil
+	}
+
+	// Format the log entry as JSON (full length, no truncation)
+	logData := map[string]interface{}{
+		"level":   entry.Level.String(),
+		"message": entry.Message,
+		"time":    entry.Time.Format(time.RFC3339),
+	}
+
+	// Add all fields
+	if len(entry.Data) > 0 {
+		for key, value := range entry.Data {
+			logData[key] = value
+		}
+	}
+
+	// Marshal to JSON
+	jsonData, err := json.Marshal(logData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal log entry: %w", err)
+	}
+
+	// Write to file with newline
+	if _, err := hook.file.Write(append(jsonData, '\n')); err != nil {
+		return fmt.Errorf("failed to write to log file: %w", err)
+	}
+
+	return nil
+}
+
+// Close closes the log file
+func (hook *FileLoggerHook) Close() error {
+	if hook.file != nil {
+		return hook.file.Close()
+	}
+	return nil
+}
+
 // JoinlyConfig represents the joinly-specific configuration
 type JoinlyConfig struct {
 	DefaultURL     string        `yaml:"default_url"`
@@ -306,6 +378,12 @@ func DefaultConfig() *Config {
 			Discord: DiscordWebhookConfig{
 				Enabled:  false,
 				Username: "Joinly Bot",
+			},
+			File: FileLoggerConfig{
+				Enabled:  true,
+				Path:     "logs/dealsense.log",
+				MaxSize:  100, // 100MB
+				MaxFiles: 5,
 			},
 		},
 		Joinly: JoinlyConfig{
@@ -406,6 +484,27 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	// File logging configuration
+	if os.Getenv("FILE_LOGGING_ENABLED") == "true" {
+		cfg.Logging.File.Enabled = true
+	}
+
+	if fileLogPath := os.Getenv("FILE_LOG_PATH"); fileLogPath != "" {
+		cfg.Logging.File.Path = fileLogPath
+	}
+
+	if maxSizeStr := os.Getenv("FILE_LOG_MAX_SIZE_MB"); maxSizeStr != "" {
+		if maxSize, err := strconv.ParseInt(maxSizeStr, 10, 64); err == nil {
+			cfg.Logging.File.MaxSize = maxSize
+		}
+	}
+
+	if maxFilesStr := os.Getenv("FILE_LOG_MAX_FILES"); maxFilesStr != "" {
+		if maxFiles, err := strconv.Atoi(maxFilesStr); err == nil {
+			cfg.Logging.File.MaxFiles = maxFiles
+		}
+	}
+
 	return cfg, nil
 }
 
@@ -436,6 +535,16 @@ func SetupLogging(cfg *LoggingConfig) error {
 		discordHook := NewDiscordHook(cfg.Discord)
 		logrus.AddHook(discordHook)
 		logrus.Info("Discord webhook logging enabled")
+	}
+
+	// Setup file logging hook if enabled
+	if cfg.File.Enabled {
+		fileHook, err := NewFileLoggerHook(cfg.File)
+		if err != nil {
+			return fmt.Errorf("failed to create file logger: %w", err)
+		}
+		logrus.AddHook(fileHook)
+		logrus.Info("File logging enabled")
 	}
 
 	return nil

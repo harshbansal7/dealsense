@@ -18,11 +18,7 @@ func (m *AgentManager) handleUtterance(agentID string, segments []map[string]int
 	// Cancel any existing utterance processing task for this agent
 	m.mu.Lock()
 	if cancelFunc, exists := m.utteranceTasks[agentID]; exists {
-		m.addLogEntryUnsafe(agentID, models.LogEntry{
-			Timestamp: time.Now(),
-			Level:     "debug",
-			Message:   "Cancelling previous utterance processing task",
-		})
+		m.addLogEntry(agentID, "debug", "Cancelling previous utterance processing task")
 		cancelFunc() // Cancel the previous task
 		delete(m.utteranceTasks, agentID)
 	}

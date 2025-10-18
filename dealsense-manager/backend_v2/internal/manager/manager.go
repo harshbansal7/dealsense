@@ -67,8 +67,6 @@ func (m *AgentManager) Start() error {
 	logrus.Info("Starting agent manager")
 	m.running = true
 	m.startTime = time.Now()
-
-	logrus.Info("Agent manager started successfully")
 	return nil
 }
 
@@ -96,8 +94,6 @@ func (m *AgentManager) Stop() error {
 
 	// Wait for all agents to stop
 	m.wg.Wait()
-
-	logrus.Info("Agent manager stopped successfully")
 	return nil
 }
 

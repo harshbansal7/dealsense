@@ -23,14 +23,6 @@ func generatePromptID() string {
 	return hex.EncodeToString(bytes)
 }
 
-// truncateString truncates a string to a maximum length for logging
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen-3] + "..."
-}
-
 // GoogleProvider implements the LLMProvider interface for Google AI
 type GoogleProvider struct {
 	model    string
@@ -61,7 +53,7 @@ func (p *GoogleProvider) Call(prompt string) (string, error) {
 		"prompt_id":    promptID,
 		"model":        p.model,
 		"call_number":  callNumber,
-		"prompt":       truncateString(prompt, 2000), // Truncate for Discord embed limits
+		"prompt":       prompt, // Truncate for Discord embed limits
 		"prompt_chars": len(prompt),
 		"timestamp":    time.Now().Format(time.RFC3339),
 	}).Info("🚀 Gemini API Request")
@@ -122,14 +114,18 @@ func (p *GoogleProvider) Call(prompt string) (string, error) {
 		"prompt_id":      promptID,
 		"model":          p.model,
 		"call_number":    callNumber,
-		"response":       truncateString(result, 2000), // Truncate for Discord embed limits
+		"response":       result, // Truncate for Discord embed limits
 		"response_chars": len(result),
 		"duration_ms":    time.Since(startTime).Milliseconds(),
 		"timestamp":      time.Now().Format(time.RFC3339),
 	}).Info("✅ Gemini API Response")
 
-	// Log API call count for Gemini (keep existing behavior)
-	fmt.Printf("📊 Gemini API Call #%d completed (Prompt ID: %s)\n", callNumber, promptID)
+	// Log API call count for Gemini
+	logrus.WithFields(logrus.Fields{
+		"call_number": callNumber,
+		"prompt_id":   promptID,
+		"provider":    "gemini",
+	}).Info("📊 Gemini API Call completed")
 
 	return result, nil
 }
@@ -149,7 +145,7 @@ func (p *GoogleProvider) CallWithGrounding(prompt string) (*GroundedResponse, er
 		"model":        p.model,
 		"call_number":  callNumber,
 		"grounding":    true,
-		"prompt":       truncateString(prompt, 2000),
+		"prompt":       prompt,
 		"prompt_chars": len(prompt),
 		"timestamp":    time.Now().Format(time.RFC3339),
 	}).Info("🔍 Gemini API Request (with grounding)")
@@ -225,7 +221,12 @@ func (p *GoogleProvider) CallWithGrounding(prompt string) (*GroundedResponse, er
 	}).Info("✅ Gemini API Response (grounded)")
 
 	// Log API call count for Gemini
-	fmt.Printf("🔍 Gemini Grounded API Call #%d completed (Prompt ID: %s)\n", callNumber, promptID)
+	logrus.WithFields(logrus.Fields{
+		"call_number": callNumber,
+		"prompt_id":   promptID,
+		"provider":    "gemini",
+		"grounding":   true,
+	}).Info("🔍 Gemini Grounded API Call completed")
 
 	return result, nil
 }
@@ -288,7 +289,7 @@ func (p *GoogleProvider) makeHTTPCallWithLogging(url string, payload map[string]
 		logrus.WithFields(logrus.Fields{
 			"prompt_id":   promptID,
 			"status_code": resp.StatusCode,
-			"error_body":  truncateString(string(body), 1000),
+			"error_body":  string(body),
 			"timestamp":   time.Now().Format(time.RFC3339),
 		}).Error("❌ Gemini HTTP Error Response")
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
@@ -304,7 +305,7 @@ func (p *GoogleProvider) extractResponseTextWithLogging(body []byte, promptID st
 		logrus.WithFields(logrus.Fields{
 			"prompt_id": promptID,
 			"error":     err.Error(),
-			"body":      truncateString(string(body), 500),
+			"body":      string(body),
 		}).Error("❌ Failed to parse Gemini response JSON")
 		return "", fmt.Errorf("failed to parse response: %w", err)
 	}
@@ -312,7 +313,7 @@ func (p *GoogleProvider) extractResponseTextWithLogging(body []byte, promptID st
 	// Log the full response structure for debugging
 	logrus.WithFields(logrus.Fields{
 		"prompt_id":     promptID,
-		"response_json": truncateString(string(body), 1500),
+		"response_json": string(body),
 		"timestamp":     time.Now().Format(time.RFC3339),
 	}).Debug("🔍 Gemini Raw Response JSON")
 
@@ -324,7 +325,7 @@ func (p *GoogleProvider) extractResponseTextWithLogging(body []byte, promptID st
 						if text, ok := part["text"].(string); ok {
 							logrus.WithFields(logrus.Fields{
 								"prompt_id":      promptID,
-								"extracted_text": truncateString(text, 500),
+								"extracted_text": text,
 								"text_length":    len(text),
 							}).Debug("✅ Successfully extracted text from Gemini response")
 							return text, nil
@@ -337,7 +338,7 @@ func (p *GoogleProvider) extractResponseTextWithLogging(body []byte, promptID st
 
 	logrus.WithFields(logrus.Fields{
 		"prompt_id":     promptID,
-		"response_json": truncateString(string(body), 1000),
+		"response_json": string(body),
 	}).Error("❌ Could not extract text from Gemini response")
 	return "", fmt.Errorf("could not extract response text from Google AI API response")
 }
@@ -395,7 +396,7 @@ func (p *GoogleProvider) makeHTTPCallWithGroundingLogging(url string, payload ma
 		logrus.WithFields(logrus.Fields{
 			"prompt_id":   promptID,
 			"status_code": resp.StatusCode,
-			"error_body":  truncateString(string(body), 1000),
+			"error_body":  string(body),
 			"grounding":   true,
 			"timestamp":   time.Now().Format(time.RFC3339),
 		}).Error("❌ Gemini HTTP Error Response (grounded)")
@@ -412,7 +413,7 @@ func (p *GoogleProvider) extractGroundedResponseWithLogging(body []byte, promptI
 		logrus.WithFields(logrus.Fields{
 			"prompt_id": promptID,
 			"error":     err.Error(),
-			"body":      truncateString(string(body), 500),
+			"body":      string(body),
 		}).Error("❌ Failed to parse Gemini grounded response JSON")
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
@@ -420,7 +421,7 @@ func (p *GoogleProvider) extractGroundedResponseWithLogging(body []byte, promptI
 	// Log the full response structure for debugging
 	logrus.WithFields(logrus.Fields{
 		"prompt_id":     promptID,
-		"response_json": truncateString(string(body), 1500),
+		"response_json": string(body),
 		"grounding":     true,
 		"timestamp":     time.Now().Format(time.RFC3339),
 	}).Debug("🔍 Gemini Raw Grounded Response JSON")
@@ -521,7 +522,7 @@ func (p *GoogleProvider) extractGroundedResponseWithLogging(body []byte, promptI
 	if result.Text == "" {
 		logrus.WithFields(logrus.Fields{
 			"prompt_id":     promptID,
-			"response_json": truncateString(string(body), 1000),
+			"response_json": string(body),
 		}).Error("❌ Could not extract text from Gemini grounded response")
 		return nil, fmt.Errorf("could not extract response text from Google AI API grounded response")
 	}
