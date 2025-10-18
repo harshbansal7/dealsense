@@ -20,7 +20,7 @@ func (c *JoinlyClient) SpeakText(text string) error {
 		return fmt.Errorf("not joined to any meeting")
 	}
 
-	c.log("info", fmt.Sprintf("🎵 Speaking text (TTS=%s): %s", c.config.TTSProvider, text))
+	c.log("info", fmt.Sprintf("🎵 Speaking text (TTS=%s): %s", *c.config.TTSProvider, text))
 
 	// Call the speak_text tool using MCP protocol (matches original joinly_client)
 	result, err := c.client.CallTool(c.ctx, mcp.CallToolRequest{
@@ -33,7 +33,7 @@ func (c *JoinlyClient) SpeakText(text string) error {
 	})
 
 	if err != nil {
-		c.log("error", fmt.Sprintf("❌ Failed to speak text with TTS provider '%s': %v", c.config.TTSProvider, err))
+		c.log("error", fmt.Sprintf("❌ Failed to speak text with TTS provider '%s': %v", *c.config.TTSProvider, err))
 		return fmt.Errorf("failed to speak text: %w", err)
 	}
 
@@ -45,7 +45,7 @@ func (c *JoinlyClient) SpeakText(text string) error {
 				errorMsg = textContent.Text
 			}
 		}
-		c.log("error", fmt.Sprintf("❌ Speak tool returned error with TTS provider '%s': %s", c.config.TTSProvider, errorMsg))
+		c.log("error", fmt.Sprintf("❌ Speak tool returned error with TTS provider '%s': %s", *c.config.TTSProvider, errorMsg))
 		return fmt.Errorf("speak failed: %s", errorMsg)
 	}
 
