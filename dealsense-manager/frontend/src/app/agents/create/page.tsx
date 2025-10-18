@@ -53,7 +53,7 @@ const agentSchema = z.object({
   conversation_mode: z.enum(['conversational', 'analyst']).default('conversational'),
   llm_provider: z.enum(['openai', 'anthropic', 'google', 'ollama']),
   llm_model: z.string().min(1, 'Model is required'),
-  tts_provider: z.enum(['kokoro', 'elevenlabs', 'deepgram']),
+  tts_provider: z.enum(['kokoro', 'elevenlabs', 'deepgram']).optional(),
   stt_provider: z.enum(['whisper', 'deepgram']),
   language: z.string().min(1, 'Language is required'),
   custom_prompt: z.string().optional(),
@@ -66,6 +66,13 @@ const agentSchema = z.object({
   max_stt_tasks: z.number().min(1).max(20).optional(),
   window_queue_size: z.number().min(10).max(1000).optional(),
   env_vars: z.record(z.string(), z.string()),
+}).refine((data) => {
+  // TTS provider is required only for conversational mode
+  if (data.conversation_mode === 'conversational' && !data.tts_provider) {
+    throw new Error('Text-to-Speech provider is required for conversational mode');
+  }
+
+  return true;
 });
 
 type AgentFormData = z.infer<typeof agentSchema>;
@@ -450,7 +457,13 @@ export default function CreateAgentPage() {
   const handleFormSubmit = async (data: AgentFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await agentsApi.create(data);
+      // Remove TTS provider for analyst mode since analyst agents don't speak
+      const submitData = { ...data };
+      if (data.conversation_mode === 'analyst') {
+        delete submitData.tts_provider;
+      }
+
+      const response = await agentsApi.create(submitData);
       updateAgent(response.data);
 
       // Provide different messages based on auto_join setting
@@ -908,7 +921,7 @@ export default function CreateAgentPage() {
                                 tabIndex={watchedTTS === option.value ? 0 : -1}
                                 type="button"
                                 onClick={() => setValue('tts_provider', option.value as 'kokoro' | 'elevenlabs' | 'deepgram')}
-                                onKeyDown={(e) => handleRadioKeyDown(e, TTS_OPTIONS, watchedTTS, (value) => setValue('tts_provider', value as 'kokoro' | 'elevenlabs' | 'deepgram'))}
+                                onKeyDown={(e) => handleRadioKeyDown(e, TTS_OPTIONS, watchedTTS || '', (value) => setValue('tts_provider', value as 'kokoro' | 'elevenlabs' | 'deepgram'))}
                                 className={`w-full p-3 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                                   watchedTTS === option.value
                                     ? `${option.selectedColor} ring-2 ring-blue-500 ring-offset-2`

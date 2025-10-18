@@ -339,16 +339,8 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
 }
 
 export function AnalysisSection({ analysis, isLoading }: AnalysisSectionProps) {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600 dark:text-gray-400">Analyzing meeting content...</p>
-        </div>
-      </div>
-    );
-  }
+  // Note: isLoading is now handled at the button level, not here
+  // This component always shows the analysis content when available
 
   const duration = analysis.duration_minutes || 0;
   const hours = Math.floor(duration / 60);

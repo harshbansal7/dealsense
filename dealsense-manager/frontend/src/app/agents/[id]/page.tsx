@@ -56,6 +56,8 @@ export default function AgentDetailsPage() {
   // Analysis state for analyst mode agents
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [isRefreshingAnalysis, setIsRefreshingAnalysis] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [formattedAnalysis, setFormattedAnalysis] = useState<string>('');
 
   const agent = agents.find(a => a.id === agentId);
@@ -142,6 +144,25 @@ export default function AgentDetailsPage() {
     }
   }, [agentId, agent]);
 
+  const refreshAnalysis = useCallback(async () => {
+    if (agent?.config.conversation_mode !== 'analyst') return;
+
+    setIsRefreshingAnalysis(true);
+    try {
+      const response = await agentsApi.getAnalysis(agentId);
+      setAnalysis(response.data);
+
+      // Also load formatted analysis
+      const formattedResponse = await agentsApi.getFormattedAnalysis(agentId);
+      setFormattedAnalysis(formattedResponse.data);
+    } catch (error) {
+      console.error('Failed to refresh analysis:', error);
+      // Don't clear analysis on refresh error, keep existing data
+    } finally {
+      setIsRefreshingAnalysis(false);
+    }
+  }, [agentId, agent]);
+
   const downloadAnalysis = () => {
     if (!formattedAnalysis) return;
 
@@ -171,6 +192,19 @@ export default function AgentDetailsPage() {
       loadAnalysis();
     }
   }, [loadLogs, loadAnalysis, agent]);
+
+  // Auto-refresh analysis data every 5 seconds when enabled
+  useEffect(() => {
+    if (agent?.config.conversation_mode !== 'analyst' || !autoRefreshEnabled || !analysis) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      refreshAnalysis();
+    }, 5000); // 5 seconds
+
+    return () => clearInterval(interval);
+  }, [agent, autoRefreshEnabled, analysis, refreshAnalysis]);
 
   // Sync logs from agent state (updated via polling)
   useEffect(() => {
@@ -927,15 +961,36 @@ export default function AgentDetailsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={loadAnalysis}
-                        disabled={isLoadingAnalysis}
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingAnalysis ? 'animate-spin' : ''}`} />
-                        Refresh
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshAnalysis}
+                          disabled={isRefreshingAnalysis}
+                        >
+                          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingAnalysis ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </Button>
+                        <div className="flex items-center gap-2 text-sm">
+                          <label htmlFor="auto-refresh" className="text-gray-600 dark:text-gray-400">
+                            Auto-refresh
+                          </label>
+                          <button
+                            id="auto-refresh"
+                            type="button"
+                            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              autoRefreshEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                autoRefreshEnabled ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -950,10 +1005,10 @@ export default function AgentDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   {analysis ? (
-                    <AnalysisSection 
+                    <AnalysisSection
                       analysis={analysis}
-                      isLoading={isLoadingAnalysis}
-                      onRefresh={loadAnalysis}
+                      isLoading={false} // Content is always visible, loading handled at button level
+                      onRefresh={refreshAnalysis}
                       onDownload={downloadAnalysis}
                     />
                   ) : (
@@ -963,10 +1018,31 @@ export default function AgentDetailsPage() {
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
                         Analysis will be generated once the agent starts transcribing the meeting.
                       </p>
-                      <Button onClick={loadAnalysis} disabled={isLoadingAnalysis}>
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingAnalysis ? 'animate-spin' : ''}`} />
-                        Check for Analysis
-                      </Button>
+                      <div className="flex items-center justify-center gap-4">
+                        <Button onClick={refreshAnalysis} disabled={isRefreshingAnalysis}>
+                          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingAnalysis ? 'animate-spin' : ''}`} />
+                          Check for Analysis
+                        </Button>
+                        <div className="flex items-center gap-2 text-sm">
+                          <label htmlFor="auto-refresh-empty" className="text-gray-600 dark:text-gray-400">
+                            Auto-refresh
+                          </label>
+                          <button
+                            id="auto-refresh-empty"
+                            type="button"
+                            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              autoRefreshEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                autoRefreshEnabled ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>

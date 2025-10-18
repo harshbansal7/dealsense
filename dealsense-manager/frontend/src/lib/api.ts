@@ -60,7 +60,7 @@ export interface AgentConfig {
   conversation_mode?: ConversationMode;
   llm_provider: LLMProvider;
   llm_model: string;
-  tts_provider: TTSProvider;
+  tts_provider?: TTSProvider; // Optional for analyst mode
   stt_provider: STTProvider;
   language: string;
   prompt_style: string;
@@ -99,7 +99,7 @@ export interface CreateAgentRequest {
   conversation_mode?: ConversationMode;
   llm_provider?: LLMProvider;
   llm_model?: string;
-  tts_provider?: TTSProvider;
+  tts_provider?: TTSProvider; // Optional for analyst mode
   stt_provider?: STTProvider;
   language?: string;
   prompt_style?: string;

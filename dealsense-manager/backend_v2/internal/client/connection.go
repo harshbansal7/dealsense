@@ -115,9 +115,13 @@ func (c *JoinlyClient) Start() error {
 	settings := map[string]interface{}{
 		"name":     c.config.Name,
 		"language": c.config.Language,
-		"tts":      string(c.config.TTSProvider), // Server uses "tts" not "tts_provider"
 		"stt":      string(c.config.STTProvider), // Server uses "stt" not "stt_provider"
 		// Note: LLM settings are client-side only, not sent to server
+	}
+
+	// Only send TTS provider if not in analyst mode (analyst agents don't speak)
+	if c.config.ConversationMode != models.ConversationModeAnalyst && c.config.TTSProvider != nil {
+		settings["tts"] = string(*c.config.TTSProvider) // Server uses "tts" not "tts_provider"
 	}
 
 	// Add transcription controller arguments if specified

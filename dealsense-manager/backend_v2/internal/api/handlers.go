@@ -131,8 +131,15 @@ func (h *Handler) CreateAgent(c *gin.Context) {
 	config.UtteranceTailSeconds = &val
 
 	// Set default conversation mode if not provided
-	if config.ConversationMode == "" {
-		config.ConversationMode = models.ConversationModeConversational
+	if config.ConversationMode == nil {
+		defaultMode := models.ConversationModeConversational
+		config.ConversationMode = &defaultMode
+	}
+
+	// Set default TTS provider for conversational mode if not provided
+	if *config.ConversationMode == models.ConversationModeConversational && config.TTSProvider == nil {
+		defaultTTS := models.TTSProviderKokoro
+		config.TTSProvider = &defaultTTS
 	}
 
 	agent, err := h.agentManager.CreateAgent(config)
@@ -277,7 +284,7 @@ func (h *Handler) GetAgentAnalysis(c *gin.Context) {
 		return
 	}
 
-	if agent.Config.ConversationMode != models.ConversationModeAnalyst {
+	if *agent.Config.ConversationMode != models.ConversationModeAnalyst {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is not in analyst mode"})
 		return
 	}
@@ -305,7 +312,7 @@ func (h *Handler) GetAgentAnalysisFormatted(c *gin.Context) {
 		return
 	}
 
-	if agent.Config.ConversationMode != models.ConversationModeAnalyst {
+	if *agent.Config.ConversationMode != models.ConversationModeAnalyst {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is not in analyst mode"})
 		return
 	}
