@@ -6,7 +6,6 @@ require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/mark3labs/mcp-go v0.39.1
 	github.com/sirupsen/logrus v1.9.3
