@@ -17,6 +17,15 @@ import (
 )
 
 func main() {
+	// in main.go or a new file
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		resp, err := http.Get("http://localhost:8001/health")
+		if err != nil || resp.StatusCode != 200 {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	// Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
