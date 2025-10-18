@@ -39,10 +39,10 @@ services:
       - joinly-network
     restart: unless-stopped
     healthcheck:
-      test: ["/app/dealsense-manager", "healthcheck"]
+      test: ["CMD", "/app/dealsense-manager", "healthcheck"]
       interval: 60s
-      timeout: 5s
-      retries: 3
+      timeout: 10s
+      retries: 2
       start_period: 40s
 
 networks:
