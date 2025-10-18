@@ -5,19 +5,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  CheckCircle, 
-  Target, 
-  Users, 
-  Clock, 
-  AlertTriangle, 
+import {
+  CheckCircle,
+  Target,
+  Users,
+  Clock,
+  AlertTriangle,
   Loader2,
   Search,
   TrendingUp,
   Brain,
   Lightbulb,
   MessageSquare,
-  Zap
+  Zap,
+  FileText,
+  Microscope,
+  ArrowRight,
+  UserCheck,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -235,11 +240,38 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
     }
   };
 
+  const formatPriority = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'High';
+      case 'medium': return 'Medium';
+      case 'low': return 'Low';
+      default: return priority.charAt(0).toUpperCase() + priority.slice(1);
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high': return <AlertTriangle className="h-3 w-3" />;
+      case 'medium': return <Clock className="h-3 w-3" />;
+      case 'low': return <CheckCircle className="h-3 w-3" />;
+      default: return <Target className="h-3 w-3" />;
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300';
       case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-300';
       default: return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900 dark:text-gray-300';
+    }
+  };
+
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'in_progress': return 'In Progress';
+      case 'pending': return 'Pending';
+      default: return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending';
     }
   };
 
@@ -254,16 +286,39 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
     }
   };
 
+  const formatType = (type?: string) => {
+    switch (type) {
+      case 'task': return 'Task';
+      case 'research': return 'Research';
+      case 'investigation': return 'Investigation';
+      case 'follow-up': return 'Follow-up';
+      case 'decision': return 'Decision';
+      default: return type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Task';
+    }
+  };
+
+  const getTypeIcon = (type?: string) => {
+    switch (type) {
+      case 'task': return <CheckCircle className="h-3 w-3" />;
+      case 'research': return <Search className="h-3 w-3" />;
+      case 'investigation': return <Microscope className="h-3 w-3" />;
+      case 'follow-up': return <ArrowRight className="h-3 w-3" />;
+      case 'decision': return <UserCheck className="h-3 w-3" />;
+      default: return <Target className="h-3 w-3" />;
+    }
+  };
+
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100/20 to-red-100/20 dark:from-orange-900/10 dark:to-red-900/10 rounded-bl-full" />
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-lg">
-          <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
+          <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg shadow-sm">
             <Target className="h-5 w-5 text-white" />
           </div>
           Action Items
-          <Badge variant="secondary" className="ml-auto">
-            {actionItems.length}
+          <Badge variant="secondary" className="ml-auto bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+            {actionItems.length} {actionItems.length === 1 ? 'item' : 'items'}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -272,9 +327,9 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
           <div className="space-y-3">
             {actionItems.map((item) => (
               <Collapsible key={item.id}>
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
                   <CollapsibleTrigger asChild>
-                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer">
+                    <div className="p-5 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors duration-200">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
@@ -283,20 +338,26 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
                             </span>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className={getPriorityColor(item.priority)}>
-                              {item.priority} priority
+                            <Badge className={`${getPriorityColor(item.priority)} px-2 py-1 text-xs font-semibold rounded-full flex items-center gap-1`}>
+                              {getPriorityIcon(item.priority)}
+                              <span>{formatPriority(item.priority)}</span>
                             </Badge>
-                            <Badge variant="outline" className={getStatusColor(item.status)}>
-                              {item.status}
-                            </Badge>
+                            {item.status && item.status.trim() !== '' && (
+                              <Badge variant="outline" className={`${getStatusColor(item.status)} px-2 py-1 text-xs border-2 rounded-full`}>
+                                {formatStatus(item.status)}
+                              </Badge>
+                            )}
                             {item.type && (
-                              <Badge className={getTypeColor(item.type)}>
-                                {item.type}
+                              <Badge className={`${getTypeColor(item.type)} px-2 py-1 text-xs rounded-full flex items-center gap-1`}>
+                                {getTypeIcon(item.type)}
+                                <span className="opacity-80">Type:</span>
+                                <span className="font-medium">{formatType(item.type)}</span>
                               </Badge>
                             )}
                             {item.assignee && (
-                              <Badge variant="outline">
-                                {item.assignee}
+                              <Badge variant="outline" className="px-2 py-1 text-xs rounded-full border-2 bg-white/50 dark:bg-gray-800/50 max-w-xs truncate">
+                                <Users className="h-3 w-3 mr-1 opacity-70" />
+                                <span className="truncate">{item.assignee}</span>
                               </Badge>
                             )}
                           </div>
@@ -305,7 +366,7 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="px-4 pb-4 bg-gray-50 dark:bg-gray-900/30">
+                    <div className="px-5 pb-5 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 border-t border-gray-100 dark:border-gray-700">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         {/* {item.due_date && (
                           <div>

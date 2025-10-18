@@ -82,26 +82,39 @@ func NewPromptBuilder(customInstructions *string) *PromptBuilder {
 	}
 }
 
-// BuildSummaryPrompt creates a prompt for meeting summary generation
+// BuildSummaryPrompt creates a prompt for meeting summary generation (safer grounding)
 func (pb *PromptBuilder) BuildSummaryPrompt(transcript, oldSummary string, useGrounding bool) string {
 	var prompt strings.Builder
 
 	// Base instructions for summary generation
-	prompt.WriteString("Analyze this meeting transcript and provide a comprehensive summary.\n\n")
+	prompt.WriteString("Analyze this meeting transcript and provide a concise, accurate summary.\n\n")
 	prompt.WriteString("Focus on:\n")
 	prompt.WriteString("- Main topics discussed\n")
 	prompt.WriteString("- Key decisions made\n")
-	prompt.WriteString("- Important information shared\n")
-	prompt.WriteString("- Overall meeting progress and outcomes\n")
+	prompt.WriteString("- Action items (who, what, by when)\n")
+	prompt.WriteString("- Important facts/figures stated in the meeting\n")
+	prompt.WriteString("- Overall meeting progress and outcomes\n\n")
 
-	// Add grounding instructions if enabled
+	// Safer grounding instructions if enabled
 	if useGrounding {
-		prompt.WriteString("- Validation of any claims, facts, or figures mentioned\n\n")
-		prompt.WriteString("IMPORTANT: For any factual statements, statistics, company data, technical specifications, or verifiable claims mentioned in the meeting:\n")
-		prompt.WriteString("1. Use google_search to verify the accuracy\n")
-		prompt.WriteString("2. Cross-reference multiple sources when possible\n")
-		prompt.WriteString("3. Note if information cannot be verified or appears outdated\n")
-		prompt.WriteString("4. Include relevant context from your search results\n")
+		prompt.WriteString("GROUNDING (STRICT & LIMITED):\n")
+		prompt.WriteString("Only attempt web verification for specific, verifiable claims that appear in the transcript. Do NOT perform open-ended or exploratory searches.\n\n")
+		prompt.WriteString("You MAY verify only when a claim matches at least one of these categories:\n")
+		prompt.WriteString("  1) Numeric/statistical claims (e.g., \"30% growth\", \"$2M budget\")\n")
+		prompt.WriteString("  2) Exact dates/timelines (e.g., \"launch on Oct 1, 2025\")\n")
+		prompt.WriteString("  3) Named external organizations, products, or third-party people **with an explicit claimed affiliation** in the transcript\n")
+		prompt.WriteString("  4) Regulatory / legal / compliance claims (e.g., \"we're GDPR compliant\")\n\n")
+
+		prompt.WriteString("VERIFICATION PROCESS (STRICT):\n")
+		prompt.WriteString("  - Only search the exact phrase or exact numeric string from the transcript (use quotes). Do NOT broaden or add synonyms.\n")
+		prompt.WriteString("  - Limit to the top 3 authoritative results (official sites, major media, gov/academic). Do NOT use blogs or random profiles unless they are authoritative.\n")
+		prompt.WriteString("  - If a claim is confirmed, include a short NOTE with source citations (1-2 lines). Do not inject additional facts from those sources into the meeting summary body.\n")
+		prompt.WriteString("  - If you cannot confirm the claim with high-quality sources, mark it explicitly as \"UNVERIFIED\". Do NOT change the meeting summary to reflect unverified web information.\n\n")
+
+		prompt.WriteString("HALLUCINATION GUARDRAIL:\n")
+		prompt.WriteString("  - Never assign or change a speaker's job title, employer, or role unless the transcript states it or it is confirmed by an authoritative source.\n")
+		prompt.WriteString("  - Do not weave in external background about people or companies that are not directly relevant to the meeting content.\n")
+		prompt.WriteString("  - When summarizing, always anchor statements to the transcript (e.g., \"Speaker X said...\") unless the fact is both stated and verified.\n\n")
 	}
 
 	// Add custom instructions (agent personality)
@@ -120,13 +133,17 @@ func (pb *PromptBuilder) BuildSummaryPrompt(transcript, oldSummary string, useGr
 	prompt.WriteString(fmt.Sprintf("\n\nRecent Transcript:\n%s\n", transcript))
 
 	// Response format
-	prompt.WriteString("\nProvide your response in the following JSON format:\n")
+	prompt.WriteString("\nProvide your response in the following JSON format. Keep verification notes separate from the core summary.\n")
 	prompt.WriteString("```\n")
 	prompt.WriteString("{\n")
-	prompt.WriteString("  \"summary\": \"Your comprehensive summary here\",\n")
-	prompt.WriteString("  \"key_themes\": [\"theme1\", \"theme2\", \"theme3\"]\n")
+	prompt.WriteString("  \"summary\": \"Your comprehensive summary here (must not include unverified external facts)\",\n")
+	prompt.WriteString("  \"key_themes\": [\"theme1\", \"theme2\", \"theme3\"],\n")
+	prompt.WriteString("  \"action_items\": [{\"owner\": \"Name\", \"task\": \"...\", \"due\": \"YYYY-MM-DD\"}],\n")
+	prompt.WriteString("  \"verification_notes\": [\n")
+	prompt.WriteString("    {\"claim\": \"exact claim text from transcript\", \"status\": \"VERIFIED|UNVERIFIED\", \"note\": \"short note\", \"sources\": [\"source1\", \"source2\"]}\n")
+	prompt.WriteString("  ]\n")
 	prompt.WriteString("}\n")
-	prompt.WriteString("```")
+	prompt.WriteString("```\n")
 
 	return prompt.String()
 }
@@ -868,6 +885,8 @@ func (a *AnalystAgent) processSummaryWithGrounding(groundedResponse *llm.Grounde
 			Text:              result.Summary,
 			GroundingMetadata: groundedResponse.GroundingMetadata,
 		}
+
+		logrus.Infof("Agent %s: Raw summary: %s, Grounding metadata: %v", a.agentID, result.Summary, groundedResponse.GroundingMetadata)
 
 		// Add citations to the text
 		if groundedResponse.GroundingMetadata != nil {

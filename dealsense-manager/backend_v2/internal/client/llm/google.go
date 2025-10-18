@@ -176,7 +176,11 @@ func (p *GoogleProvider) CallWithGrounding(prompt string) (*GroundedResponse, er
 	// Configure generation settings with grounding
 	generationConfig := map[string]interface{}{
 		"maxOutputTokens": 2000,
-		"temperature":     0.5,
+		"temperature":     0.3,
+		"topP":            0.95, 
+		"topK":            40, 
+		"frequencyPenalty": 0.5, 	
+		"presencePenalty": 0.5, 
 	}
 
 	// Add grounding tool
