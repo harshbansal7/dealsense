@@ -37,9 +37,12 @@ USER 65534:65534
 # Set working directory
 WORKDIR /app
 
+USER root
+RUN mkdir -p /tmp && chmod -R 777 /tmp
+USER 65534:65534
+
 # Copy the binary from builder stage
 COPY --from=builder /app/dealsense-manager .
-
 COPY --from=builder /app/genai-exchange-475318-84af2a035486.json .
 COPY --from=builder /app/config.yaml .
 
