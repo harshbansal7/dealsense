@@ -352,7 +352,7 @@ type AnalystAgent struct {
 // NewAnalystAgent creates a new analyst agent
 func NewAnalystAgent(agentID string, config models.AgentConfig, llmClient *JoinlyClient) *AnalystAgent {
 	// Create data directory if it doesn't exist
-	dataDir := "data/analysis"
+	dataDir := "tmp/data/analysis"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		logrus.Errorf("Failed to create analysis data directory: %v", err)
 	}
@@ -556,7 +556,7 @@ func (a *AnalystAgent) generateSummary() error {
 	if groundingProvider, ok := a.llmProvider.(llm.GroundingCapableProvider); ok {
 		logrus.Infof("Agent %s: Using grounded call for summary generation", a.agentID)
 
-		groundedResponse, err := groundingProvider.CallWithGrounding(prompt, nil) 
+		groundedResponse, err := groundingProvider.CallWithGrounding(prompt, nil)
 		if err != nil {
 			logrus.Warnf("Grounded call failed for summary, falling back to regular call: %v", err)
 			return err
