@@ -52,11 +52,11 @@ type ChatResponse struct {
 
 // ContextChunk represents a retrieved context chunk
 type ContextChunk struct {
-	Text       string  `json:"text"`
-	Source     string  `json:"source"` // "document" or "meeting"
-	PageNumber int     `json:"page_number"`
-	Similarity float32 `json:"similarity"`
-	DisplaySource string `json:"display_source"`
+	Text          string  `json:"text"`
+	Source        string  `json:"source"` // "document" or "meeting"
+	PageNumber    int     `json:"page_number"`
+	Similarity    float32 `json:"similarity"`
+	DisplaySource string  `json:"display_source"`
 }
 
 // Source represents a source document or meeting
@@ -88,7 +88,12 @@ func (c *ChatbotService) Query(req ChatRequest) (*ChatResponse, error) {
 	documentContext, docSources, err := c.retrieveDocumentContext(req)
 	if err != nil {
 		logrus.Warnf("Failed to retrieve document context: %v", err)
-		documentContext = []ContextChunk{}
+		return &ChatResponse{
+			SessionID:    req.SessionID,
+			Query:        req.Query,
+			Response:     "I encountered an error while retrieving document context. Please try again later.",
+			ResponseTime: float64(time.Since(startTime).Milliseconds()) / 1000.0,
+		}, nil
 	}
 
 	// Step 2: Retrieve relevant context from meeting transcripts
@@ -108,6 +113,15 @@ func (c *ChatbotService) Query(req ChatRequest) (*ChatResponse, error) {
 
 	var meetingCount int64
 	c.db.Model(&database.TranscriptSegment{}).Where("agent_id = ?", req.AgentID).Count(&meetingCount)
+
+	var pastChatHistory []database.ChatMessage
+	err = c.db.Where("agent_id = ? AND session_id = ?", req.AgentID, req.SessionID).
+		Order("created_at ASC").
+		Select("role, content").
+		Find(&pastChatHistory).Error
+	if err != nil {
+		logrus.Warnf("Failed to retrieve past chat history: %v", err)
+	}
 
 	// Log what context is available
 	hasDocContext := len(documentContext) > 0
@@ -151,7 +165,7 @@ func (c *ChatbotService) Query(req ChatRequest) (*ChatResponse, error) {
 	}
 
 	// Step 4: Build prompt with retrieved context
-	prompt := c.buildRAGPrompt(req.Query, allContext)
+	prompt := c.buildRAGPrompt(req.Query, allContext, pastChatHistory)
 
 	// Step 5: Call LLM
 	response, err := c.llmProvider.CallWithGrounding(prompt, map[string]interface{}{
@@ -201,10 +215,10 @@ func (c *ChatbotService) retrieveDocumentContext(req ChatRequest) ([]ContextChun
 
 	for _, result := range results {
 		contexts = append(contexts, ContextChunk{
-			Text:       result.ChunkText,
-			Source:     "document",
-			PageNumber: result.PageNumber,
-			Similarity: result.Similarity,
+			Text:          result.ChunkText,
+			Source:        "document",
+			PageNumber:    result.PageNumber,
+			Similarity:    result.Similarity,
 			DisplaySource: "Document ID: " + result.DocumentID.String(),
 		})
 
@@ -288,7 +302,7 @@ func (c *ChatbotService) retrieveMeetingContext(req ChatRequest) ([]ContextChunk
 }
 
 // buildRAGPrompt constructs a prompt with retrieved context
-func (c *ChatbotService) buildRAGPrompt(query string, contexts []ContextChunk) string {
+func (c *ChatbotService) buildRAGPrompt(query string, contexts []ContextChunk, pastChatHistory []database.ChatMessage) string {
 	var prompt strings.Builder
 
 	// Count context sources
@@ -371,6 +385,15 @@ func (c *ChatbotService) buildRAGPrompt(query string, contexts []ContextChunk) s
 				prompt.WriteString(fmt.Sprintf("SYSTEM NOTE: %s\n\n", ctx.Text))
 			}
 		}
+	}
+
+	if len(pastChatHistory) > 0 {
+		prompt.WriteString("PAST CONVERSATION HISTORY:\n")
+		prompt.WriteString("---\n")
+		for _, msg := range pastChatHistory {
+			prompt.WriteString(fmt.Sprintf("[%s]: %s\n", msg.Role, msg.Content))
+		}
+		prompt.WriteString("---\n\n")
 	}
 
 	prompt.WriteString(fmt.Sprintf("USER QUESTION: %s\n\n", query))
