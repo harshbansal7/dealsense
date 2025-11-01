@@ -40,6 +40,9 @@ WORKDIR /app
 # Copy the binary from builder stage
 COPY --from=builder /app/dealsense-manager .
 
+COPY --from=builder /app/genai-exchange-475318-84af2a035486.json .
+COPY --from=builder /app/config.yaml .
+
 # Expose port
 EXPOSE 8001
 
