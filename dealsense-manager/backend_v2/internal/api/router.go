@@ -76,10 +76,6 @@ func SetupRouter(cfg *config.Config, agentManager *services.AgentManager, db *da
 		agents.POST("/:agent_id/chat", docHandler.ChatQuery)
 		agents.GET("/:agent_id/chat/:session_id", docHandler.GetChatHistory)
 
-		// Startup analysis routes
-		agents.POST("/:agent_id/analyze", docHandler.AnalyzeStartup)
-		agents.GET("/:agent_id/analysis/startup", docHandler.GetStartupAnalysis)
-
 		// Document-specific routes (not agent-scoped)
 		documents := router.Group("/documents")
 		{

@@ -8,6 +8,7 @@ import (
 
 	aiplatform "cloud.google.com/go/aiplatform/apiv1"
 	"cloud.google.com/go/aiplatform/apiv1/aiplatformpb"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -275,6 +276,7 @@ type SimilarityResult struct {
 	PageNumber int                    `json:"page_number"`
 	Similarity float32                `json:"similarity"`
 	Metadata   map[string]interface{} `json:"metadata"`
+	DocumentID uuid.UUID              `json:"document_id"`
 }
 
 // EmbeddingToJSON converts an embedding to JSON string for database storage

@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -31,14 +31,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAgentStore, useUIStore } from '@/lib/store';
-import { agentsApi, Agent, LogEntry } from '@/lib/api';
+import { agentsApi, Agent } from '@/lib/api';
 
 export default function AgentsPage() {
   const {
     agents,
     isLoading,
     setAgents,
-    updateAgent,
     removeAgent,
     setLoading
   } = useAgentStore();
@@ -66,33 +65,131 @@ export default function AgentsPage() {
     loadAgents();
   }, [loadAgents]);
 
-  // Polling for status updates (every 10 seconds)
-  useEffect(() => {
-    const pollInterval = setInterval(async () => {
-      try {
-        const response = await agentsApi.list();
-        const currentAgentIds = new Set(agents.map(a => a.id));
-        const serverAgentIds = new Set(response.data.map(a => a.id));
+  // Polling state - shared across re-renders
+  const pollingRef = useRef<{
+    timeoutId: NodeJS.Timeout | null;
+    consecutiveErrors: number;
+    currentInterval: number;
+    isPollingEnabled: boolean;
+    isDestroyed: boolean;
+    isPolling: boolean;
+    lastAgentsData: Agent[];
+  }>({
+    timeoutId: null,
+    consecutiveErrors: 0,
+    currentInterval: 10000,
+    isPollingEnabled: true,
+    isDestroyed: false,
+    isPolling: false,
+    lastAgentsData: [],
+  });
 
-        // Check for status changes or new/deleted agents
-        const hasChanges = response.data.some((serverAgent) => {
-          const localAgent = agents.find(a => a.id === serverAgent.id);
-          return !localAgent ||
-                 localAgent.status !== serverAgent.status ||
-                 localAgent.logs.length !== serverAgent.logs.length;
-        }) || currentAgentIds.size !== serverAgentIds.size;
+  // Stable polling function that doesn't recreate on every render
+  const pollAgents = useCallback(async () => {
+    if (pollingRef.current.isDestroyed || !pollingRef.current.isPollingEnabled || pollingRef.current.isPolling) {
+      return;
+    }
 
-        if (hasChanges) {
-          console.log('🔄 Status changes detected, updating agents...');
-          setAgents(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to poll agents:', error);
+    pollingRef.current.isPolling = true;
+
+    try {
+      console.log('🔍 Polling agents...');
+      const response = await agentsApi.list();
+
+      // Success - reset error count and normalize interval
+      pollingRef.current.consecutiveErrors = 0;
+      pollingRef.current.currentInterval = 10000; // Reset to 10 seconds
+      pollingRef.current.isPollingEnabled = true;
+
+      // Check for status changes or new/deleted agents
+      const currentAgentIds = new Set(pollingRef.current.lastAgentsData.map(a => a.id));
+      const serverAgentIds = new Set(response.data.map((a: Agent) => a.id));
+
+      const hasChanges = response.data.some((serverAgent: Agent) => {
+        const localAgent = pollingRef.current.lastAgentsData.find(a => a.id === serverAgent.id);
+        return !localAgent ||
+               localAgent.status !== serverAgent.status ||
+               localAgent.logs.length !== serverAgent.logs.length;
+      }) || currentAgentIds.size !== serverAgentIds.size;
+
+      if (hasChanges) {
+        console.log('🔄 Status changes detected, updating agents...');
+        pollingRef.current.lastAgentsData = response.data;
+        setAgents(response.data);
       }
-    }, 10000); // Poll every 10 seconds
 
-    return () => clearInterval(pollInterval);
-  }, [agents, setAgents]);
+      // Schedule next poll only if not destroyed
+      if (!pollingRef.current.isDestroyed) {
+        pollingRef.current.timeoutId = setTimeout(pollAgents, pollingRef.current.currentInterval);
+      }
+
+    } catch (error) {
+      console.error('Failed to poll agents:', error);
+      pollingRef.current.consecutiveErrors++;
+
+      // Circuit breaker logic
+      if (pollingRef.current.consecutiveErrors >= 3) {
+        // Disable polling after 3 consecutive errors
+        pollingRef.current.isPollingEnabled = false;
+        pollingRef.current.currentInterval = Math.min(pollingRef.current.currentInterval * 2, 300000);
+
+        addNotification({
+          type: 'warning',
+          title: 'Connection issues detected',
+          message: 'Having trouble connecting to server. Polling paused temporarily.',
+        });
+
+        // Re-enable polling after a delay (1 minute)
+        setTimeout(() => {
+          if (!pollingRef.current.isDestroyed) {
+            pollingRef.current.isPollingEnabled = true;
+            pollingRef.current.consecutiveErrors = 0;
+            console.log('🔄 Re-enabling polling after circuit breaker timeout');
+            // Start polling again
+            pollingRef.current.timeoutId = setTimeout(pollAgents, pollingRef.current.currentInterval);
+          }
+        }, 60000);
+
+      } else {
+        // Increase interval for retry
+        if (pollingRef.current.consecutiveErrors === 1) {
+          pollingRef.current.currentInterval = Math.min(pollingRef.current.currentInterval * 1.5, 30000);
+        } else {
+          pollingRef.current.currentInterval = Math.min(pollingRef.current.currentInterval * 2, 60000);
+        }
+
+        console.log(`⚡ Poll failed (${pollingRef.current.consecutiveErrors} consecutive errors). Next poll in ${pollingRef.current.currentInterval / 1000}s`);
+
+        // Schedule retry with new interval
+        if (!pollingRef.current.isDestroyed) {
+          pollingRef.current.timeoutId = setTimeout(pollAgents, pollingRef.current.currentInterval);
+        }
+      }
+    } finally {
+      pollingRef.current.isPolling = false;
+    }
+  }, [setAgents, addNotification]); // Only stable dependencies
+
+  // Sync agents data to polling ref
+  useEffect(() => {
+    pollingRef.current.lastAgentsData = agents;
+  }, [agents]);
+
+  // Start polling on mount - only once
+  useEffect(() => {
+    // Only start polling if not already started
+    if (!pollingRef.current.timeoutId && !pollingRef.current.isDestroyed) {
+      pollingRef.current.timeoutId = setTimeout(pollAgents, 100); // Small delay to ensure component is mounted
+    }
+
+    return () => {
+      pollingRef.current.isDestroyed = true;
+      if (pollingRef.current.timeoutId) {
+        clearTimeout(pollingRef.current.timeoutId);
+        pollingRef.current.timeoutId = null;
+      }
+    };
+  }, [pollAgents]); // pollAgents is stable due to useCallback
 
 
 
@@ -415,3 +512,4 @@ export default function AgentsPage() {
     </Layout>
   );
 }
+

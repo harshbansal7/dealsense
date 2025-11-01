@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/aiplatform v1.108.0
 	cloud.google.com/go/documentai v1.39.0
 	cloud.google.com/go/storage v1.57.0
+	cloud.google.com/go/vertexai v0.15.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0

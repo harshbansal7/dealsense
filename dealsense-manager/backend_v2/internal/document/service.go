@@ -1,6 +1,7 @@
 package document
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -38,6 +39,11 @@ type Service struct {
 	vectorSearch     *VectorSearchService // Optional: nil if not configured
 	useVectorSearch  bool
 }
+
+var (
+	RestrictsKeyList = []string{"agent_id"}
+	MetadataKeyList  = []string{"agent_id", "document_id", "page_number", "chunk_index", "chunk_length", "chunk_text", "chunk_metadata"}
+)
 
 // NewService creates a new document service
 func NewService(db *database.Database, config ServiceConfig) (*Service, error) {
@@ -107,10 +113,10 @@ func (s *Service) UploadAndProcessDocument(agentID uuid.UUID, fileName string, f
 	if err != nil {
 		logrus.Warnf("Failed to download document for page counting: %v. Using fallback estimation.", err)
 	}
-	
+
 	var pageCount int
 	var isActual bool
-	
+
 	if reader != nil {
 		defer reader.Close()
 		pageCount, isActual = GetPageCountWithFallback(reader, fileSize, contentType)
@@ -215,44 +221,38 @@ func (s *Service) processDocumentBatch(documentID uuid.UUID, storagePath string,
 	}
 
 	// Start batch processing
-	operationName, err := s.processor.batchProcessor.ProcessDocumentBatchAsync(gcsURI, outputPrefix, contentType)
+	operation, err := s.processor.batchProcessor.ProcessDocumentBatchAsync(gcsURI, outputPrefix, contentType)
 	if err != nil {
 		s.updateDocumentStatus(documentID, "failed", fmt.Sprintf("Failed to start batch processing: %v", err))
 		return
 	}
 
+	operationName := operation.Name()
 	// Update document with batch operation info
 	updateData := map[string]interface{}{
 		"used_batch_processing": true,
 		"batch_operation_name":  operationName,
 		"batch_output_path":     outputPrefix,
 	}
+
 	s.db.Model(&database.Document{}).Where("id = ?", documentID).Updates(updateData)
 
 	logrus.Infof("Batch processing started for document %s, operation: %s", documentID.String(), operationName)
 
-	// Wait for batch processing to complete (in background)
-	// Poll operation status every 30 seconds
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
 
-	timeout := time.After(30 * time.Minute) // 30 minute timeout for batch processing
+	_, err = operation.Wait(ctx)
+	if err != nil {
+		s.updateDocumentStatus(documentID, "failed", fmt.Sprintf("Failed to wait for batch processing: %v", err))
+		return
+	}
 
-	for {
-		select {
-		case <-ticker.C:
-			// Check if operation is complete by trying to retrieve result
-			processed, err := s.processor.batchProcessor.RetrieveBatchResult(outputPrefix)
-			if err == nil && processed != nil {
-				logrus.Info("Batch processing completed successfully")
-				s.storeProcessedDocument(documentID, processed, true, operationName, outputPrefix)
-				return
-			}
-			logrus.Debugf("Batch operation still processing...")
-		case <-timeout:
-			s.updateDocumentStatus(documentID, "failed", "Batch processing timeout")
-			return
-		}
+	processed, err := s.processor.batchProcessor.RetrieveBatchResult(outputPrefix)
+	if err == nil && processed != nil {
+		logrus.Infof("Batch processing completed successfully for document %s", documentID.String())
+		s.storeProcessedDocument(documentID, processed, true, operationName, outputPrefix)
+		return
 	}
 }
 
@@ -379,7 +379,7 @@ func (s *Service) generateAndStoreEmbeddings(documentID uuid.UUID, processed *Pr
 			// Store in Vector Search if enabled
 			var vectorSearchID string
 			storedInVectorSearch := false
-			
+
 			if s.useVectorSearch && s.vectorSearch != nil {
 				// Create datapoint for Vector Search
 				datapointID := CreateDatapointID(documentID, chunkData.ChunkIndex)
@@ -516,15 +516,24 @@ func (s *Service) searchWithVectorSearch(agentID uuid.UUID, queryEmbedding []flo
 		}
 
 		// Get page number from embedding metadata
+
 		pageNumber := 0
-		// Could parse from embedding.ChunkMetadata if needed
+		logrus.Infof("Match metadata: %v", match.Metadata)
+		if match.Metadata != nil {
+			if pageNumberInt, ok := match.Metadata["page_number"].(int); ok {
+				pageNumber = pageNumberInt
+			} else {
+				logrus.Warnf("Page number not found in chunk metadata")
+			}
+		}
 
 		results = append(results, SimilarityResult{
 			ChunkText:  embedding.ChunkText,
 			ChunkIndex: embedding.ChunkIndex,
 			PageNumber: pageNumber,
 			Similarity: match.Similarity,
-			Metadata:   map[string]interface{}{},
+			Metadata:   match.Metadata,
+			DocumentID: docID,
 		})
 	}
 

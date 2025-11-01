@@ -56,6 +56,7 @@ type ContextChunk struct {
 	Source     string  `json:"source"` // "document" or "meeting"
 	PageNumber int     `json:"page_number"`
 	Similarity float32 `json:"similarity"`
+	DisplaySource string `json:"display_source"`
 }
 
 // Source represents a source document or meeting
@@ -204,6 +205,7 @@ func (c *ChatbotService) retrieveDocumentContext(req ChatRequest) ([]ContextChun
 			Source:     "document",
 			PageNumber: result.PageNumber,
 			Similarity: result.Similarity,
+			DisplaySource: "Document ID: " + result.DocumentID.String(),
 		})
 
 		// Track unique document sources (would need to fetch document info)
@@ -303,28 +305,43 @@ func (c *ChatbotService) buildRAGPrompt(query string, contexts []ContextChunk) s
 		}
 	}
 
-	prompt.WriteString("You are an intelligent assistant helping analyze startup meetings and pitch documents. ")
+	prompt.WriteString("You are an intelligent AI assistant helping analyze startup meetings and pitch documents. ")
+	prompt.WriteString("You are equipped with advanced capabilities including access to Google Search (Google Grounding) for real-time information when needed.\n\n")
 
 	// Provide clear guidance based on available data
+	prompt.WriteString("CAPABILITIES:\n")
 	if docContextCount > 0 && meetingContextCount > 0 {
-		prompt.WriteString("You have access to both pitch documents and meeting transcripts. ")
-		prompt.WriteString("Use all available context to provide a comprehensive answer. ")
+		prompt.WriteString("- Access to pitch documents and meeting transcripts (provided below)\n")
+		prompt.WriteString("- Google Search capability for latest market data, news, and external information\n")
+		prompt.WriteString("- Use all available context to provide comprehensive answers\n\n")
 	} else if docContextCount > 0 {
-		prompt.WriteString("You have access to pitch documents only. ")
-		prompt.WriteString("If the question is about meeting discussions or conversations, acknowledge that meeting transcripts are not available. ")
-		prompt.WriteString("Focus on what you can learn from the documents. ")
+		prompt.WriteString("- Access to pitch documents (provided below)\n")
+		prompt.WriteString("- Google Search capability for latest market data, news, and external information\n")
+		prompt.WriteString("- If questions are about meetings, acknowledge transcripts aren't available but use documents and search\n\n")
 	} else if meetingContextCount > 0 {
-		prompt.WriteString("You have access to meeting transcripts only. ")
-		prompt.WriteString("If the question requires information from pitch documents or detailed startup materials, acknowledge that documents are not available. ")
-		prompt.WriteString("Focus on what was discussed in the meeting. ")
+		prompt.WriteString("- Access to meeting transcripts (provided below)\n")
+		prompt.WriteString("- Google Search capability for latest market data, news, and external information\n")
+		prompt.WriteString("- If questions need detailed documents, acknowledge unavailability but use transcripts and search\n\n")
 	} else if systemContextCount > 0 {
-		// System context indicates data exists but wasn't relevant
-		prompt.WriteString("Note: The available data did not contain specific information matching this query. ")
-		prompt.WriteString("Provide a helpful response based on your general knowledge, but clearly indicate that this is not from the uploaded data. ")
+		prompt.WriteString("- Google Search capability for latest market data, news, and external information\n")
+		prompt.WriteString("- No directly relevant context found in local data\n")
+		prompt.WriteString("- Use Google Search for real-time information and general knowledge to provide helpful responses\n\n")
 	}
 
-	prompt.WriteString("Always be honest about what information you have and don't have. ")
-	prompt.WriteString("If you can partially answer, do so and explain what additional information would be needed.\n\n")
+	prompt.WriteString("RESPONSE FORMATTING GUIDELINES:\n")
+	prompt.WriteString("- Structure your responses with clear sections using markdown headers (##)\n")
+	prompt.WriteString("- Use bullet points (- or *) for lists and key points\n")
+	prompt.WriteString("- Use **bold** for emphasis on important terms or figures\n")
+	prompt.WriteString("- For numerical data or metrics, format them clearly (e.g., $5.2M, 45% growth)\n")
+	prompt.WriteString("- Include relevant emojis sparingly for visual appeal (📊 📈 💡 ⚠️ ✅)\n")
+	prompt.WriteString("- When citing information from Google Search, mention it naturally (e.g., 'According to recent market data...')\n")
+	prompt.WriteString("- Be concise yet comprehensive - aim for clarity and readability\n\n")
+
+	prompt.WriteString("GUIDELINES:\n")
+	prompt.WriteString("- Always be honest about information sources and limitations\n")
+	prompt.WriteString("- Use Google Search for current market trends, competitor info, or external validation\n")
+	prompt.WriteString("- If you can partially answer, do so and explain what additional information would help\n")
+	prompt.WriteString("- Provide actionable insights when possible\n\n")
 
 	// Only include context section if there's actual content (not just system messages)
 	if docContextCount > 0 || meetingContextCount > 0 {

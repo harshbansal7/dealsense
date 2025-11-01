@@ -213,6 +213,22 @@
     -ms-text-size-adjust: 100%;
   }
 
+  /* Fix cursor pointer on interactive elements */
+  button,
+  a,
+  select,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [disabled] {
+    cursor: not-allowed;
+  }
+
   /* Log text wrapping utilities */
   .log-content {
     word-break: break-all;
@@ -244,6 +260,17 @@
     100% { background-position: 0% 50%; }
   }
 
+  /* Chat interface animations */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -255,6 +282,14 @@
   .animate-gradient {
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
   }
 
   /* Improved backdrop blur for modern browsers */

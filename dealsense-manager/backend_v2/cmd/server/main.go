@@ -96,15 +96,14 @@ func main() {
 		// Initialize document services
 		docService, docErr := initializeDocumentServices(cfg, db)
 		if docErr != nil {
-			logrus.Warnf("Failed to initialize document services: %v", err)
+			logrus.Warnf("Failed to initialize document services: %v", docErr)
 			logrus.Info("Document services will be disabled")
 		} else {
 			// Initialize chatbot and startup analyzer
 			chatbotService := document.NewChatbotService(db, docService, groundingCapableProvider)
-			startupAnalyzer := document.NewStartupAnalyzer(db, docService, groundingCapableProvider)
 
 			// Create document handler
-			documentHandler = api.NewDocumentHandler(docService, chatbotService, startupAnalyzer)
+			documentHandler = api.NewDocumentHandler(docService, chatbotService)
 			logrus.Info("Document services initialized successfully")
 		}
 	}
@@ -163,7 +162,7 @@ func main() {
 func initializeDocumentServices(cfg *config.Config, db *database.Database) (*document.Service, error) {
 	// Check if Google Cloud configuration is available
 	if cfg.Google.ProjectID == "" {
-		return nil, fmt.Errorf("Google Cloud project ID not configured")
+		return nil, fmt.Errorf("google cloud project ID is not configured")
 	}
 
 	// Initialize storage client

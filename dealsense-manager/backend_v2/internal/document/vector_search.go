@@ -3,6 +3,8 @@ package document
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	aiplatform "cloud.google.com/go/aiplatform/apiv1"
@@ -10,29 +12,30 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // VectorSearchConfig holds Google Vertex AI Vector Search configuration
 type VectorSearchConfig struct {
-	ProjectID             string // Project ID (e.g., "genai-exchange-475318")
-	ProjectNumber         string // Optional: Project number (e.g., "33593473489"). If set, overrides ProjectID for Vector Search paths.
-	Location              string // e.g., "us-central1"
-	IndexID               string // The deployed index ID (just the numeric ID)
-	IndexEndpointID       string // The index endpoint ID (just the numeric ID)
-	DeployedIndexID       string // The deployed index ID used when deploying to endpoint (e.g., "dealsense_deployed")
-	PublicEndpointDomain  string // Optional: Public endpoint domain for queries (e.g., "266063970.us-central1-33593473489.vdb.vertexai.goog")
-	CredentialsJSON       string
-	UseDefaultCreds       bool
-	Enabled               bool
+	ProjectID            string // Project ID (e.g., "genai-exchange-475318")
+	ProjectNumber        string // Optional: Project number (e.g., "33593473489"). If set, overrides ProjectID for Vector Search paths.
+	Location             string // e.g., "us-central1"
+	IndexID              string // The deployed index ID (just the numeric ID)
+	IndexEndpointID      string // The index endpoint ID (just the numeric ID)
+	DeployedIndexID      string // The deployed index ID used when deploying to endpoint (e.g., "dealsense_deployed")
+	PublicEndpointDomain string // Optional: Public endpoint domain for queries (e.g., "266063970.us-central1-33593473489.vdb.vertexai.goog")
+	CredentialsJSON      string
+	UseDefaultCreds      bool
+	Enabled              bool
 }
 
 // VectorSearchService handles vector search operations using Google Vertex AI Vector Search
 type VectorSearchService struct {
-	indexClient    *aiplatform.IndexClient
-	matchClient    *aiplatform.MatchClient
-	config         VectorSearchConfig
-	indexEndpoint  string
-	ctx            context.Context
+	indexClient   *aiplatform.IndexClient
+	matchClient   *aiplatform.MatchClient
+	config        VectorSearchConfig
+	indexEndpoint string
+	ctx           context.Context
 }
 
 // VectorSearchDatapoint represents a vector datapoint for indexing
@@ -69,10 +72,10 @@ func NewVectorSearchService(config VectorSearchConfig) (*VectorSearchService, er
 	// CRITICAL: Different endpoints for different operations
 	// - IndexClient (upsert/remove): uses regional aiplatform endpoint
 	// - MatchClient (search/query): uses public VDB endpoint
-	
+
 	// Regional endpoint for index management operations
 	managementEndpoint := fmt.Sprintf("%s-aiplatform.googleapis.com:443", config.Location)
-	
+
 	// Public endpoint for query operations
 	queryEndpoint := config.PublicEndpointDomain
 	if queryEndpoint != "" {
@@ -82,7 +85,7 @@ func NewVectorSearchService(config VectorSearchConfig) (*VectorSearchService, er
 		queryEndpoint = managementEndpoint
 		logrus.Warn("PublicEndpointDomain not configured, using regional endpoint for queries (may cause errors)")
 	}
-	
+
 	if config.UseDefaultCreds {
 		indexClient, err = aiplatform.NewIndexClient(ctx, option.WithEndpoint(managementEndpoint))
 		if err != nil {
@@ -95,14 +98,14 @@ func NewVectorSearchService(config VectorSearchConfig) (*VectorSearchService, er
 			return nil, fmt.Errorf("failed to create match client: %w", err)
 		}
 	} else if config.CredentialsJSON != "" {
-		indexClient, err = aiplatform.NewIndexClient(ctx, 
+		indexClient, err = aiplatform.NewIndexClient(ctx,
 			option.WithCredentialsJSON([]byte(config.CredentialsJSON)),
 			option.WithEndpoint(managementEndpoint))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create index client: %w", err)
 		}
 
-		matchClient, err = aiplatform.NewMatchClient(ctx, 
+		matchClient, err = aiplatform.NewMatchClient(ctx,
 			option.WithCredentialsJSON([]byte(config.CredentialsJSON)),
 			option.WithEndpoint(queryEndpoint))
 		if err != nil {
@@ -156,25 +159,30 @@ func (v *VectorSearchService) UpsertDatapoints(datapoints []VectorSearchDatapoin
 		// Convert metadata to Restricts for filtering
 		// This allows us to filter by agent_id and other metadata at query time
 		var restricts []*aiplatformpb.IndexDatapoint_Restriction
-		for namespace, value := range dp.Metadata {
-			// Convert value to string
-			valueStr, ok := value.(string)
-			if !ok {
-				valueStr = fmt.Sprintf("%v", value)
-			}
+
+		metadata, err := structpb.NewStruct(dp.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to convert metadata to struct: %w", err)
+		}
+
+		logrus.Infof("Metadata converted to struct: %+v", metadata.AsMap())
+
+		for _, key := range RestrictsKeyList {
+			value := dp.Metadata[key]
 			restricts = append(restricts, &aiplatformpb.IndexDatapoint_Restriction{
-				Namespace: namespace,
-				AllowList: []string{valueStr},
+				Namespace: key,
+				AllowList: []string{value.(string)},
 			})
 		}
-		
+
 		protoDatapoints = append(protoDatapoints, &aiplatformpb.IndexDatapoint{
-			DatapointId:   dp.ID,
-			FeatureVector: featureVector,
-			Restricts:     restricts,
+			DatapointId:       dp.ID,
+			FeatureVector:     featureVector,
+			Restricts:         restricts,
+			EmbeddingMetadata: metadata,
 		})
 
-		logrus.Debugf("Prepared datapoint: ID=%s, Vector dim=%d, Restricts: %v", 
+		logrus.Debugf("Prepared datapoint: ID=%s, Vector dim=%d, Restricts: %v",
 			dp.ID, len(featureVector), dp.Metadata)
 	}
 
@@ -237,13 +245,13 @@ func (v *VectorSearchService) Search(queryEmbedding []float32, topK int, filters
 	if deployedIndexID == "" {
 		deployedIndexID = "dealsense_deployed" // Default fallback
 	}
-	
+
 	req := &aiplatformpb.FindNeighborsRequest{
 		IndexEndpoint:   v.indexEndpoint,
 		DeployedIndexId: deployedIndexID,
 		Queries:         queries,
 	}
-	
+
 	logrus.Debugf("Querying deployed index: %s on endpoint: %s", deployedIndexID, v.indexEndpoint)
 
 	// Execute search
@@ -274,27 +282,24 @@ func (v *VectorSearchService) Search(queryEmbedding []float32, topK int, filters
 			similarity = 1
 		}
 
+		logrus.Infof("Neighbor datapoint metadata: %+v", neighbor.Datapoint.GetEmbeddingMetadata().AsMap())
+
 		match := VectorSearchMatch{
-			ID:         neighbor.Datapoint.DatapointId,
+			ID:         neighbor.Datapoint.GetDatapointId(),
 			Distance:   distance,
 			Similarity: similarity,
-			Metadata:   make(map[string]interface{}), // Empty - no metadata from STREAM_UPDATE
+			Metadata:   neighbor.Datapoint.GetEmbeddingMetadata().AsMap(),
 		}
 
-		// NOTE: STREAM_UPDATE doesn't support Restricts, so no metadata is returned
-		// Filtering must happen at the service layer using database queries
 		matches = append(matches, match)
 	}
 
 	logrus.Infof("Vector Search returned %d matches", len(matches))
-	
-	// Note about filters: STREAM_UPDATE doesn't support metadata/restricts
-	// The filters parameter is accepted for API compatibility but filtering
-	// must be done at the service layer (service.go) using database queries
+
 	if len(filters) > 0 {
 		logrus.Debugf("Note: Filters %v will be applied at service layer via database", filters)
 	}
-	
+
 	return matches, nil
 }
 
@@ -389,13 +394,23 @@ func CreateDatapointID(documentID uuid.UUID, chunkIndex int) string {
 
 // ParseDatapointID parses a datapoint ID to extract document ID and chunk index
 func ParseDatapointID(datapointID string) (uuid.UUID, int, error) {
-	var docID uuid.UUID
-	var chunkIndex int
-
-	// Format: {documentID}_chunk_{chunkIndex}
-	n, err := fmt.Sscanf(datapointID, "%s_chunk_%d", &docID, &chunkIndex)
-	if err != nil || n != 2 {
+	// Expected format: "{documentID}_chunk_{chunkIndex}"
+	const sep = "_chunk_"
+	idx := strings.LastIndex(datapointID, sep)
+	if idx < 0 {
 		return uuid.Nil, 0, fmt.Errorf("invalid datapoint ID format: %s", datapointID)
+	}
+
+	docIDStr := datapointID[:idx]
+	chunkIndexStr := datapointID[idx+len(sep):]
+
+	docID, err := uuid.Parse(docIDStr)
+	if err != nil {
+		return uuid.Nil, 0, fmt.Errorf("invalid document UUID in datapoint ID: %w", err)
+	}
+	chunkIndex, err := strconv.Atoi(chunkIndexStr)
+	if err != nil {
+		return uuid.Nil, 0, fmt.Errorf("invalid chunk index in datapoint ID: %w", err)
 	}
 
 	return docID, chunkIndex, nil
@@ -432,4 +447,3 @@ func (v *VectorSearchService) HealthCheck() error {
 	}
 	return nil
 }
-

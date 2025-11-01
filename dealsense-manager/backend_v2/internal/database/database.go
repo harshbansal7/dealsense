@@ -89,7 +89,6 @@ func (d *Database) AutoMigrate() error {
 		&Document{},
 		&DocumentEmbedding{},
 		&ChatMessage{},
-		&StartupAnalysis{},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)

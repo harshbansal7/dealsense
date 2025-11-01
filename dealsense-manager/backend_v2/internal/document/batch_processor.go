@@ -10,7 +10,9 @@ import (
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
 	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // BatchProcessor handles async batch processing for large documents
@@ -110,7 +112,7 @@ func (b *BatchProcessor) ProcessDocumentBatch(inputGCSURI, outputGCSPrefix strin
 }
 
 // ProcessDocumentBatchAsync starts batch processing and returns operation name for polling
-func (b *BatchProcessor) ProcessDocumentBatchAsync(inputGCSURI, outputGCSPrefix string, mimeType string) (string, error) {
+func (b *BatchProcessor) ProcessDocumentBatchAsync(inputGCSURI, outputGCSPrefix string, mimeType string) (*documentai.BatchProcessDocumentsOperation, error) {
 	logrus.Infof("Starting async batch processing for document: %s", inputGCSURI)
 
 	processorName := fmt.Sprintf("projects/%s/locations/%s/processors/%s",
@@ -141,12 +143,10 @@ func (b *BatchProcessor) ProcessDocumentBatchAsync(inputGCSURI, outputGCSPrefix 
 
 	op, err := b.client.BatchProcessDocuments(b.ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to start async batch processing: %w", err)
+		return nil, fmt.Errorf("failed to start async batch processing: %w", err)
 	}
 
-	operationName := op.Name()
-	logrus.Infof("Async batch processing started, operation: %s", operationName)
-	return operationName, nil
+	return op, nil
 }
 
 // GetOperationStatus checks the status of a batch processing operation
@@ -160,42 +160,96 @@ func (b *BatchProcessor) GetOperationStatus(operationName string) (bool, error) 
 
 // RetrieveBatchResult retrieves and parses the batch processing result from GCS
 func (b *BatchProcessor) RetrieveBatchResult(outputGCSPrefix string) (*ProcessedDocument, error) {
-	// The batch processor outputs results to GCS in a specific format
-	// We need to read the output JSON and convert it to ProcessedDocument
+	// The batch processor outputs results to GCS in a specific format:
+	// {outputPrefix}/{operation_id}/0/{filename}-{page}.json
 	logrus.Infof("Retrieving batch result from: %s", outputGCSPrefix)
 
 	// List files in output directory
-	bucket := b.storageClient.Bucket(extractBucketName(outputGCSPrefix))
+	bucketName := extractBucketName(outputGCSPrefix)
 	prefix := extractObjectPrefix(outputGCSPrefix)
-
-	// The output is typically in format: {outputPrefix}/0/output-1-to-1.json
-	outputPath := fmt.Sprintf("%s/0/output-1-to-1.json", prefix)
 	
-	obj := bucket.Object(outputPath)
-	reader, err := obj.NewReader(b.ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read batch output: %w", err)
+	bucket := b.storageClient.Bucket(bucketName)
+	
+	// List all JSON files under the prefix
+	query := &storage.Query{
+		Prefix: prefix,
 	}
-	defer reader.Close()
-
-	// Read the document proto
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read batch output data: %w", err)
+	
+	it := bucket.Objects(b.ctx, query)
+	var jsonFiles []string
+	
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to list batch output files: %w", err)
+		}
+		
+		// Only process JSON files
+		if len(attrs.Name) > 5 && attrs.Name[len(attrs.Name)-5:] == ".json" {
+			jsonFiles = append(jsonFiles, attrs.Name)
+		}
 	}
+	
+	if len(jsonFiles) == 0 {
+		return nil, fmt.Errorf("no JSON output files found in %s", outputGCSPrefix)
+	}
+	
+	logrus.Infof("Found %d JSON output files", len(jsonFiles))
+	
+	// Read and merge all JSON files (they represent different pages)
+	var allText string
+	var totalPages int
+	
+	for _, filePath := range jsonFiles {
+		obj := bucket.Object(filePath)
+		reader, err := obj.NewReader(b.ctx)
+		if err != nil {
+			logrus.Warnf("Failed to read output file %s: %v", filePath, err)
+			continue
+		}
+		
+		data, err := io.ReadAll(reader)
+		reader.Close()
+		if err != nil {
+			logrus.Warnf("Failed to read data from %s: %v", filePath, err)
+			continue
+		}
+		
+		// The output is a Document proto in JSON format
+		// Parse it to extract text
+		var doc documentaipb.Document
+		if err := protojson.Unmarshal(data, &doc); err != nil {
+			logrus.Warnf("Failed to parse document proto from %s: %v", filePath, err)
+			// Fallback: treat as raw text
+			allText += string(data) + "\n\n"
+			continue
+		}
+		
+		// Extract text from document
+		if doc.Text != "" {
+			allText += doc.Text + "\n\n"
+		}
+		
+		totalPages += len(doc.Pages)
+		
+		logrus.Infof("Processed file %s: %d pages, %d bytes text", filePath, len(doc.Pages), len(doc.Text))
+	}
+	
+	if allText == "" {
+		return nil, fmt.Errorf("no text extracted from batch output files")
+	}
+	
+	logrus.Infof("Retrieved batch result: %d pages, %d total characters", totalPages, len(allText))
 
-	// Parse the Document proto from JSON
-	// Note: The actual batch output format needs to be parsed properly
-	// This is a simplified implementation
-	logrus.Infof("Retrieved batch result, size: %d bytes", len(data))
-
-	// TODO: Parse the actual Document proto from the batch output
-	// For now, return a placeholder
 	return &ProcessedDocument{
-		Text:   string(data),
-		Pages:  1,
+		Text:  allText,
+		Pages: totalPages,
 		Metadata: map[string]interface{}{
-			"source": "batch_processing",
+			"source":     "batch_processing",
+			"file_count": len(jsonFiles),
 		},
 	}, nil
 }
@@ -241,7 +295,7 @@ func (b *BatchProcessor) Close() error {
 // Returns: processed document, isAsync flag, operation name (if async), error
 func (p *DocumentProcessor) IntelligentProcessDocument(fileData io.Reader, mimeType string, estimatedPages int, gcsURI string, outputPrefix string) (*ProcessedDocument, bool, string, error) {
 	const syncPageLimit = 15
-	
+
 	logrus.Infof("Intelligent processing: estimated pages=%d, mime=%s", estimatedPages, mimeType)
 
 	// For documents ≤15 pages, use sync processing (supports images)
@@ -253,7 +307,7 @@ func (p *DocumentProcessor) IntelligentProcessDocument(fileData io.Reader, mimeT
 
 	// For documents >15 pages, we MUST use async batch processing
 	logrus.Info("Using async batch processing (>15 pages)")
-	
+
 	// Note: Batch processing requires the document to be in GCS already
 	// The caller should have uploaded it to GCS first
 	if gcsURI == "" {
@@ -267,13 +321,11 @@ func (p *DocumentProcessor) IntelligentProcessDocument(fileData io.Reader, mimeT
 	}
 
 	// Start async batch processing
-	operationName, err := p.batchProcessor.ProcessDocumentBatchAsync(gcsURI, outputPrefix, mimeType)
+	operation, err := p.batchProcessor.ProcessDocumentBatchAsync(gcsURI, outputPrefix, mimeType)
 	if err != nil {
 		return nil, false, "", fmt.Errorf("failed to start batch processing: %w", err)
 	}
 
 	// Return nil document with operation name for polling
-	return nil, true, operationName, nil
+	return nil, true, operation.Name(), nil
 }
-
-

@@ -17,15 +17,13 @@ import (
 type DocumentHandler struct {
 	documentService *document.Service
 	chatbotService  *document.ChatbotService
-	startupAnalyzer *document.StartupAnalyzer
 }
 
 // NewDocumentHandler creates a new document handler
-func NewDocumentHandler(docService *document.Service, chatbotService *document.ChatbotService, analyzer *document.StartupAnalyzer) *DocumentHandler {
+func NewDocumentHandler(docService *document.Service, chatbotService *document.ChatbotService) *DocumentHandler {
 	return &DocumentHandler{
 		documentService: docService,
 		chatbotService:  chatbotService,
-		startupAnalyzer: analyzer,
 	}
 }
 
@@ -281,52 +279,6 @@ func (h *DocumentHandler) GetChatHistory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"messages": history})
-}
-
-// AnalyzeStartup handles POST /agents/:agent_id/analyze
-func (h *DocumentHandler) AnalyzeStartup(c *gin.Context) {
-	agentIDStr := c.Param("agent_id")
-	agentID, err := uuid.Parse(agentIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid agent ID"})
-		return
-	}
-
-	var req document.AnalysisRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	req.AgentID = agentID
-
-	logrus.Infof("Starting startup analysis for agent %s with %d documents", agentID.String(), len(req.DocumentIDs))
-
-	result, err := h.startupAnalyzer.AnalyzeStartup(req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to analyze startup: %v", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
-// GetStartupAnalysis handles GET /agents/:agent_id/analysis/startup
-func (h *DocumentHandler) GetStartupAnalysis(c *gin.Context) {
-	agentIDStr := c.Param("agent_id")
-	agentID, err := uuid.Parse(agentIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid agent ID"})
-		return
-	}
-
-	analysis, err := h.startupAnalyzer.GetLatestAnalysis(agentID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No analysis found for this agent"})
-		return
-	}
-
-	c.JSON(http.StatusOK, analysis)
 }
 
 // GetDocumentStatus handles GET /documents/:document_id/status

@@ -209,11 +209,11 @@ type DocumentEmbedding struct {
 	ChunkMetadata string    `gorm:"type:jsonb"` // page number, section, etc
 
 	// Vector embedding (stored as JSONB for backward compatibility, prefer Vector Search)
-	Embedding      string `gorm:"type:jsonb"` // Optional: only populated if not using Vector Search
+	Embedding      string `gorm:"type:jsonb"`                            // Optional: only populated if not using Vector Search
 	EmbeddingModel string `gorm:"not null;default:'text-embedding-004'"` // Vertex AI model
 
 	// Vector Search integration
-	VectorSearchID      string `gorm:"index" json:"vector_search_id"`                // Datapoint ID in Vector Search
+	VectorSearchID       string `gorm:"index" json:"vector_search_id"`                // Datapoint ID in Vector Search
 	StoredInVectorSearch bool   `gorm:"default:false" json:"stored_in_vector_search"` // Whether stored in Vector Search
 
 	// Relationships
@@ -238,34 +238,6 @@ type ChatMessage struct {
 	Document *Document `gorm:"foreignKey:DocumentID;constraint:OnDelete:SET NULL" json:"-"`
 }
 
-// StartupAnalysis represents comprehensive startup analysis combining meeting + documents
-type StartupAnalysis struct {
-	BaseModel
-	AgentID      uuid.UUID  `gorm:"type:uuid;not null;index"`
-	MeetingID    *uuid.UUID `gorm:"type:uuid;index"`
-	AnalysisType string     `gorm:"not null"` // pitch_analysis, founder_reliability, market_opportunity, etc
-
-	// Analysis results
-	Score           float64 `gorm:""` // Overall score (0-100)
-	Summary         string  `gorm:"type:text"`
-	KeyFindings     string  `gorm:"type:jsonb"` // Array of findings
-	RedFlags        string  `gorm:"type:jsonb"` // Array of concerns
-	Opportunities   string  `gorm:"type:jsonb"` // Array of opportunities
-	Recommendations string  `gorm:"type:jsonb"` // Array of recommendations
-
-	// Data sources used
-	DocumentIDs     string `gorm:"type:jsonb"` // UUIDs of documents used
-	TranscriptRange string `gorm:"type:jsonb"` // Timestamp ranges used
-
-	// Metadata
-	GeneratedAt time.Time `gorm:"not null"`
-	ModelUsed   string    `gorm:"not null"`
-
-	// Relationships
-	Agent   Agent    `gorm:"constraint:OnDelete:CASCADE"`
-	Meeting *Meeting `gorm:"foreignKey:MeetingID;constraint:OnDelete:SET NULL"`
-}
-
 // BeforeCreate hooks for new models
 func (d *Document) BeforeCreate(tx *gorm.DB) error {
 	if d.ID == uuid.Nil {
@@ -284,13 +256,6 @@ func (de *DocumentEmbedding) BeforeCreate(tx *gorm.DB) error {
 func (cm *ChatMessage) BeforeCreate(tx *gorm.DB) error {
 	if cm.ID == uuid.Nil {
 		cm.ID = uuid.New()
-	}
-	return nil
-}
-
-func (sa *StartupAnalysis) BeforeCreate(tx *gorm.DB) error {
-	if sa.ID == uuid.Nil {
-		sa.ID = uuid.New()
 	}
 	return nil
 }

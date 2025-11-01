@@ -327,15 +327,23 @@ func (p *GoogleProvider) extractResponseTextWithLogging(body []byte, promptID st
 		if candidate, ok := candidates[0].(map[string]interface{}); ok {
 			if content, ok := candidate["content"].(map[string]interface{}); ok {
 				if parts, ok := content["parts"].([]interface{}); ok && len(parts) > 0 {
-					if part, ok := parts[0].(map[string]interface{}); ok {
-						if text, ok := part["text"].(string); ok {
-							logrus.WithFields(logrus.Fields{
-								"prompt_id":      promptID,
-								"extracted_text": text,
-								"text_length":    len(text),
-							}).Debug("✅ Successfully extracted text from Gemini response")
-							return text, nil
+					// Concatenate all parts (Gemini may split response into multiple parts)
+					var textBuilder strings.Builder
+					for _, p := range parts {
+						if part, ok := p.(map[string]interface{}); ok {
+							if text, ok := part["text"].(string); ok {
+								textBuilder.WriteString(text)
+							}
 						}
+					}
+					fullText := textBuilder.String()
+					if fullText != "" {
+						logrus.WithFields(logrus.Fields{
+							"prompt_id":   promptID,
+							"text_length": len(fullText),
+							"parts_count": len(parts),
+						}).Debug("✅ Successfully extracted text from Gemini response")
+						return fullText, nil
 					}
 				}
 			}
@@ -438,14 +446,18 @@ func (p *GoogleProvider) extractGroundedResponseWithLogging(body []byte, promptI
 	// Extract text content
 	if candidates, ok := response["candidates"].([]interface{}); ok && len(candidates) > 0 {
 		if candidate, ok := candidates[0].(map[string]interface{}); ok {
-			// Extract text
+			// Extract text from all parts (Gemini may split response into multiple parts)
 			if content, ok := candidate["content"].(map[string]interface{}); ok {
 				if parts, ok := content["parts"].([]interface{}); ok && len(parts) > 0 {
-					if part, ok := parts[0].(map[string]interface{}); ok {
-						if text, ok := part["text"].(string); ok {
-							result.Text = text
+					var textBuilder strings.Builder
+					for _, p := range parts {
+						if part, ok := p.(map[string]interface{}); ok {
+							if text, ok := part["text"].(string); ok {
+								textBuilder.WriteString(text)
+							}
 						}
 					}
+					result.Text = textBuilder.String()
 				}
 			}
 

@@ -41,8 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Layout } from '@/components/layout/layout';
 import { AnalysisSection } from '@/components/analysis/AnalysisSection';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
-import { ChatbotInterface } from '@/components/chat/ChatbotInterface';
-import { StartupAnalysis } from '@/components/analysis/StartupAnalysis';
+import { ChatInterface } from '@/components/chat/ChatInterface';
 import type { AnalysisData, Document } from '@/lib/api';
 import { documentsApi } from '@/lib/api';
 
@@ -57,7 +56,14 @@ export default function AgentDetailsPage() {
   const [logs, setLogs] = useState<{ timestamp: string; level: string; message: string }[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [logFilter, setLogFilter] = useState<string>('all');
-  const [isLoadingAgent, setIsLoadingAgent] = useState(false);
+  
+  // Agent existence state
+  const [agentNotFound, setAgentNotFound] = useState(false);
+
+  const agent = agents.find(a => a.id === agentId);
+  
+  // Set loading state based on whether agent exists in store
+  const [isLoadingAgent, setIsLoadingAgent] = useState(!agent);
 
   // Analysis state for analyst mode agents
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
@@ -68,14 +74,10 @@ export default function AgentDetailsPage() {
   // Document and advanced features state
   const [documents, setDocuments] = useState<Document[]>([]);
 
-  // Agent existence state
-  const [agentNotFound, setAgentNotFound] = useState(false);
-
-  const agent = agents.find(a => a.id === agentId);
 
   // Load agent data if not found in store (direct URL access)
   const loadAgent = useCallback(async () => {
-    if (agent || isLoadingAgent || agentNotFound) return;
+    if (agent || agentNotFound) return;
 
     setIsLoadingAgent(true);
     try {
@@ -106,7 +108,7 @@ export default function AgentDetailsPage() {
     } finally {
       setIsLoadingAgent(false);
     }
-  }, [agentId, agent, isLoadingAgent, agentNotFound, setAgents, addNotification]);
+  }, [agentId, agent, agentNotFound, setAgents, addNotification]);
 
   // Helper function to safely parse URLs
   const getUrlInfo = (url: string) => {
@@ -131,7 +133,7 @@ export default function AgentDetailsPage() {
   });
 
   const loadLogs = useCallback(async () => {
-    if (!agent || agentNotFound) return;
+    if (agentNotFound) return;
 
     setIsLoadingLogs(true);
     try {
@@ -142,10 +144,10 @@ export default function AgentDetailsPage() {
     } finally {
       setIsLoadingLogs(false);
     }
-  }, [agentId, agent, agentNotFound]);
+  }, [agentId, agentNotFound]);
 
   const loadAnalysis = useCallback(async () => {
-    if (!agent || agentNotFound || agent?.config.conversation_mode !== 'analyst') return;
+    if (agentNotFound) return;
 
     setIsLoadingAnalysis(true);
     try {
@@ -157,10 +159,10 @@ export default function AgentDetailsPage() {
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [agentId, agent, agentNotFound]);
+  }, [agentId, agentNotFound]);
 
   const refreshAnalysis = useCallback(async () => {
-    if (!agent || agentNotFound || agent?.config.conversation_mode !== 'analyst') return;
+    if (agentNotFound) return;
 
     setIsRefreshingAnalysis(true);
     try {
@@ -172,7 +174,7 @@ export default function AgentDetailsPage() {
     } finally {
       setIsRefreshingAnalysis(false);
     }
-  }, [agentId, agent, agentNotFound]);
+  }, [agentId, agentNotFound]);
 
   const downloadAnalysis = async () => {
     if (!agent || agentNotFound || agent?.config.conversation_mode !== 'analyst') return;
@@ -211,7 +213,7 @@ export default function AgentDetailsPage() {
   }, [loadAgent]);
 
   const loadDocuments = useCallback(async () => {
-    if (!agentId || !agent || agentNotFound) return;
+    if (!agentId || agentNotFound) return;
 
     try {
       const response = await documentsApi.list(agentId);
@@ -219,15 +221,18 @@ export default function AgentDetailsPage() {
     } catch (error) {
       console.error('Failed to load documents:', error);
     }
-  }, [agentId, agent, agentNotFound]);
+  }, [agentId, agentNotFound]);
 
+  // Load data once when agent is available
   useEffect(() => {
-    loadLogs();
-    loadDocuments();
-    if (agent?.config.conversation_mode === 'analyst') {
-      loadAnalysis();
+    if (agent && !agentNotFound) {
+      loadLogs();
+      loadDocuments();
+      if (agent.config.conversation_mode === 'analyst') {
+        loadAnalysis();
+      }
     }
-  }, [loadLogs, loadDocuments, loadAnalysis, agent]);
+  }, [agent?.id, agentNotFound, loadLogs, loadDocuments, loadAnalysis]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh analysis data every 5 seconds when enabled
   useEffect(() => {
@@ -703,9 +708,9 @@ export default function AgentDetailsPage() {
           </CardContent>
         </Card>
 
-        {/* Logs, Status, Analysis, Documents, Chat, and Startup Analysis */}
+        {/* Logs, Status, Analysis, Documents, and Chat */}
         <Tabs defaultValue={agent.config.conversation_mode === 'analyst' ? 'analysis' : 'logs'} className="w-full">
-          <TabsList className={`grid w-full ${agent.config.conversation_mode === 'analyst' ? 'grid-cols-6' : 'grid-cols-5'}`}>
+          <TabsList className={`grid w-full ${agent.config.conversation_mode === 'analyst' ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Logs
@@ -727,10 +732,6 @@ export default function AgentDetailsPage() {
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Chat
-            </TabsTrigger>
-            <TabsTrigger value="startup" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Startup
             </TabsTrigger>
           </TabsList>
 
@@ -1109,18 +1110,9 @@ export default function AgentDetailsPage() {
 
           {/* Chat Tab */}
           <TabsContent value="chat" className="space-y-4">
-            <div className="h-[600px]">
-              <ChatbotInterface agentId={agentId} />
+            <div className="h-[700px]">
+              <ChatInterface agentId={agentId} />
             </div>
-          </TabsContent>
-
-          {/* Startup Analysis Tab */}
-          <TabsContent value="startup" className="space-y-4">
-            <StartupAnalysis 
-              agentId={agentId}
-              documents={documents}
-              onAnalyze={loadDocuments}
-            />
           </TabsContent>
         </Tabs>
       </div>
