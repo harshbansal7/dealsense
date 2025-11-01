@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import {
-  FileText,
   Lightbulb,
   Copy,
   BookOpen,

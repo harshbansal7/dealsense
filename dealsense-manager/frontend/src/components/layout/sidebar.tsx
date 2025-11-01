@@ -14,14 +14,12 @@ import {
   LogOut,
   Video,
   Plus,
-  Activity,
   Sparkles,
   Zap,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useUIStore, useAgentStore } from '@/lib/store';
 
 const navigation = [
@@ -82,6 +80,30 @@ export function Sidebar({ className }: SidebarProps) {
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Add custom scrollbar styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   const activeAgents = agents.filter(a => a.status === 'running').length;
@@ -295,25 +317,4 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
     </div>
   );
-}
-
-// Add custom scrollbar styles
-const style = document.createElement('style');
-style.textContent = `
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-`;
-if (typeof document !== 'undefined') {
-  document.head.appendChild(style);
 }

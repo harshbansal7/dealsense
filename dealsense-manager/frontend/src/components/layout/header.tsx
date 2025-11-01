@@ -8,7 +8,6 @@ import { Bell, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +26,6 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isDark, setIsDark] = useState(true);
   const { notifications } = useUIStore();
 

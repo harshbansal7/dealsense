@@ -279,11 +279,11 @@ export default function LandingPage() {
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
                         <MessageCircle className="w-4 h-4 text-white" />
                       </div>
-                      <div className="text-xs font-semibold text-white">RAG Chat</div>
-                    </div>
-                    <div className="text-xs text-gray-400 leading-relaxed">
-                      "What were the key decisions in the Q4 meeting?"
-                    </div>
+                    <div className="text-xs font-semibold text-white">RAG Chat</div>
+                  </div>
+                  <div className="text-xs text-gray-400 leading-relaxed">
+                    &ldquo;What were the key decisions in the Q4 meeting?&rdquo;
+                  </div>
                     <div className="mt-2 flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                       <span className="text-[10px] text-green-400">Analyzing transcript...</span>
