@@ -39,6 +39,7 @@ func getPDFPageCount(fileData io.Reader) (int, error) {
 
 	// Get page count using pdfcpu API
 	// We use PageCount which requires a ReadSeeker
+	api.DisableConfigDir() // Disable config dir to avoid side effects
 	pageCount, err := api.PageCount(reader, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count PDF pages: %w", err)
@@ -68,7 +69,7 @@ func getPPTXSlideCount(fileData io.Reader) (int, error) {
 	// Get slide count
 	slideCount := len(pres.Slides())
 	logrus.Infof("PPTX has %d slides (actual count)", slideCount)
-	
+
 	return slideCount, nil
 }
 
@@ -120,4 +121,3 @@ func GetPageCountWithFallback(fileData io.Reader, fileSize int64, mimeType strin
 	logrus.Infof("Using estimated page count: %d", estimatedCount)
 	return estimatedCount, false // false = estimated
 }
-
