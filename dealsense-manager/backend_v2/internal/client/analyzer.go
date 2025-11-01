@@ -352,7 +352,7 @@ type AnalystAgent struct {
 // NewAnalystAgent creates a new analyst agent
 func NewAnalystAgent(agentID string, config models.AgentConfig, llmClient *JoinlyClient) *AnalystAgent {
 	// Create data directory if it doesn't exist
-	dataDir := "tmp/data/analysis"
+	dataDir := "/tmp/data/analysis"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		logrus.Errorf("Failed to create analysis data directory: %v", err)
 	}
