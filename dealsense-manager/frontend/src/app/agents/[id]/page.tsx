@@ -1020,6 +1020,33 @@ export default function AgentDetailsPage() {
                           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingAnalysis ? 'animate-spin' : ''}`} />
                           Refresh
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await agentsApi.triggerAnalysisUpdate(agentId);
+                              addNotification({
+                                type: 'success',
+                                title: 'Analysis Update Triggered',
+                                message: 'Analysis is being regenerated with latest transcripts',
+                              });
+                              // Wait a bit before refreshing to let the analysis complete
+                              setTimeout(() => refreshAnalysis(), 2000);
+                            } catch (error) {
+                              console.error('Failed to trigger analysis update:', error);
+                              addNotification({
+                                type: 'error',
+                                title: 'Failed to Update Analysis',
+                                message: 'Could not trigger analysis update. Please try again.',
+                              });
+                            }
+                          }}
+                          disabled={isRefreshingAnalysis || agent?.status !== 'running'}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Update Analysis
+                        </Button>
                         <div className="flex items-center gap-2 text-sm">
                           <label htmlFor="auto-refresh" className="text-gray-600 dark:text-gray-400">
                             Auto-refresh
@@ -1071,6 +1098,31 @@ export default function AgentDetailsPage() {
                         <Button onClick={refreshAnalysis} disabled={isRefreshingAnalysis}>
                           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingAnalysis ? 'animate-spin' : ''}`} />
                           Check for Analysis
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              await agentsApi.triggerAnalysisUpdate(agentId);
+                              addNotification({
+                                type: 'success',
+                                title: 'Analysis Update Triggered',
+                                message: 'Analysis is being regenerated with latest transcripts',
+                              });
+                              setTimeout(() => refreshAnalysis(), 2000);
+                            } catch (error) {
+                              console.error('Failed to trigger analysis update:', error);
+                              addNotification({
+                                type: 'error',
+                                title: 'Failed to Update Analysis',
+                                message: 'Could not trigger analysis update. Please try again.',
+                              });
+                            }
+                          }}
+                          disabled={isRefreshingAnalysis || agent?.status !== 'running'}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Generate Analysis
                         </Button>
                         <div className="flex items-center gap-2 text-sm">
                           <label htmlFor="auto-refresh-empty" className="text-gray-600 dark:text-gray-400">

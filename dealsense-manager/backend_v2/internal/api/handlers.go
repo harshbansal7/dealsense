@@ -311,3 +311,28 @@ func (h *Handler) GetAgentAnalysisFormatted(c *gin.Context) {
 	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.String(http.StatusOK, formattedAnalysis)
 }
+
+// TriggerAnalysisUpdate handles POST /agents/{agent_id}/analysis/update
+func (h *Handler) TriggerAnalysisUpdate(c *gin.Context) {
+	agentID := c.Param("agent_id")
+
+	// Check if agent exists and is in analyst mode
+	agent, exists := h.agentManager.GetAgent(agentID)
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+
+	if agent.Config.ConversationMode != models.ConversationModeAnalyst {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Agent is not in analyst mode"})
+		return
+	}
+
+	// Trigger analysis update
+	if err := h.agentManager.TriggerAnalysisUpdate(agentID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Analysis update triggered successfully"})
+}

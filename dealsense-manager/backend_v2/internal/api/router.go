@@ -55,6 +55,7 @@ func SetupRouter(cfg *config.Config, agentManager *services.AgentManager, db *da
 		agents.GET("/:agent_id/logs", handler.GetAgentLogs)
 		agents.GET("/:agent_id/analysis", handler.GetAgentAnalysis)
 		agents.GET("/:agent_id/analysis/formatted", handler.GetAgentAnalysisFormatted)
+		agents.POST("/:agent_id/analysis/update", handler.TriggerAnalysisUpdate)
 	}
 
 	// Meeting routes

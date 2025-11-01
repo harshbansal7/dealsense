@@ -4,25 +4,24 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { JSX, useState } from 'react';
 import {
   CheckCircle,
   Target,
   Users,
   Clock,
   AlertTriangle,
-  Loader2,
   Search,
   TrendingUp,
   Brain,
   Lightbulb,
   MessageSquare,
   Zap,
-  FileText,
   Microscope,
   ArrowRight,
   UserCheck,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -228,10 +227,8 @@ function EnhancedKeyPointsCard({ analysis }: { analysis: AnalysisData }) {
   );
 }
 
-function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
-  const [expandedItems] = useState<Set<string>>(new Set());
-
-  const getPriorityColor = (priority: string) => {
+// Helper functions for action item formatting (moved outside to be reusable)
+const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
@@ -295,9 +292,9 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
       case 'decision': return 'Decision';
       default: return type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Task';
     }
-  };
+};
 
-  const getTypeIcon = (type?: string) => {
+const getTypeIcon = (type?: string) => {
     switch (type) {
       case 'task': return <CheckCircle className="h-3 w-3" />;
       case 'research': return <Search className="h-3 w-3" />;
@@ -306,6 +303,16 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
       case 'decision': return <UserCheck className="h-3 w-3" />;
       default: return <Target className="h-3 w-3" />;
     }
+};
+
+function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
+  const [expandedItems] = useState<Set<string>>(new Set());
+  
+  // Group action items by priority for better organization
+  const groupedItems = {
+    high: actionItems.filter(item => item.priority === 'high'),
+    medium: actionItems.filter(item => item.priority === 'medium'),
+    low: actionItems.filter(item => item.priority === 'low'),
   };
 
   return (
@@ -324,70 +331,57 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
       </CardHeader>
       <CardContent>
         {actionItems.length > 0 ? (
-          <div className="space-y-3">
-            {actionItems.map((item) => (
-              <Collapsible key={item.id}>
-                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
-                  <CollapsibleTrigger asChild>
-                    <div className="p-5 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors duration-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {item.description}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className={`${getPriorityColor(item.priority)} px-2 py-1 text-xs font-semibold rounded-full flex items-center gap-1`}>
-                              {getPriorityIcon(item.priority)}
-                              <span>{formatPriority(item.priority)}</span>
-                            </Badge>
-                            {item.status && item.status.trim() !== '' && (
-                              <Badge variant="outline" className={`${getStatusColor(item.status)} px-2 py-1 text-xs border-2 rounded-full`}>
-                                {formatStatus(item.status)}
-                              </Badge>
-                            )}
-                            {item.type && (
-                              <Badge className={`${getTypeColor(item.type)} px-2 py-1 text-xs rounded-full flex items-center gap-1`}>
-                                {getTypeIcon(item.type)}
-                                <span className="opacity-80">Type:</span>
-                                <span className="font-medium">{formatType(item.type)}</span>
-                              </Badge>
-                            )}
-                            {item.assignee && (
-                              <Badge variant="outline" className="px-2 py-1 text-xs rounded-full border-2 bg-white/50 dark:bg-gray-800/50 max-w-xs truncate">
-                                <Users className="h-3 w-3 mr-1 opacity-70" />
-                                <span className="truncate">{item.assignee}</span>
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-5 pb-5 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 border-t border-gray-100 dark:border-gray-700">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        {/* {item.due_date && (
-                          <div>
-                            <span className="font-medium text-gray-600 dark:text-gray-400">Due Date:</span>
-                            <p className="text-gray-900 dark:text-white">
-                              {new Date(item.due_date).toLocaleDateString()}
-                            </p>
-                          </div>
-                        )} */}
-                        <div>
-                          <span className="font-medium text-gray-600 dark:text-gray-400">Created:</span>
-                          <p className="text-gray-900 dark:text-white">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
+          <div className="space-y-6">
+            {/* High Priority Items */}
+            {groupedItems.high.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <h3 className="text-sm font-semibold text-red-900 dark:text-red-100">
+                    High Priority ({groupedItems.high.length})
+                  </h3>
                 </div>
-              </Collapsible>
-            ))}
+                <div className="space-y-3">
+                  {groupedItems.high.map((item) => (
+                    <ItemCard key={item.id} item={item} {...{ getPriorityColor, formatPriority, getPriorityIcon, getStatusColor, formatStatus, getTypeColor, formatType, getTypeIcon }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Medium Priority Items */}
+            {groupedItems.medium.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
+                    Medium Priority ({groupedItems.medium.length})
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {groupedItems.medium.map((item) => (
+                    <ItemCard key={item.id} item={item} {...{ getPriorityColor, formatPriority, getPriorityIcon, getStatusColor, formatStatus, getTypeColor, formatType, getTypeIcon }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Low Priority Items */}
+            {groupedItems.low.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                    Low Priority ({groupedItems.low.length})
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {groupedItems.low.map((item) => (
+                    <ItemCard key={item.id} item={item} {...{ getPriorityColor, formatPriority, getPriorityIcon, getStatusColor, formatStatus, getTypeColor, formatType, getTypeIcon }} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-6 text-gray-500 dark:text-gray-400">
@@ -399,6 +393,96 @@ function ActionItemsCard({ actionItems }: { actionItems: ActionItem[] }) {
   );
 }
 
+// Separate component for individual action item card
+function ItemCard({ 
+  item, 
+  getPriorityColor, 
+  formatPriority, 
+  getPriorityIcon, 
+  getStatusColor, 
+  formatStatus, 
+  getTypeColor, 
+  formatType, 
+  getTypeIcon 
+}: { 
+  item: ActionItem; 
+  getPriorityColor: (priority: string) => string;
+  formatPriority: (priority: string) => string;
+  getPriorityIcon: (priority: string) => JSX.Element;
+  getStatusColor: (status: string) => string;
+  formatStatus: (status: string) => string;
+  getTypeColor: (type?: string) => string;
+  formatType: (type?: string) => string;
+  getTypeIcon: (type?: string) => JSX.Element;
+}) {
+  return (
+    <Collapsible>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
+        <CollapsibleTrigger asChild>
+          <div className="p-5 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors duration-200">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {item.description}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className={`${getPriorityColor(item.priority)} px-2 py-1 text-xs font-semibold rounded-full flex items-center gap-1`}>
+                    {getPriorityIcon(item.priority)}
+                    <span>{formatPriority(item.priority)}</span>
+                  </Badge>
+                  {item.status && item.status.trim() !== '' && (
+                    <Badge variant="outline" className={`${getStatusColor(item.status)} px-2 py-1 text-xs border-2 rounded-full`}>
+                      {formatStatus(item.status)}
+                    </Badge>
+                  )}
+                  {item.type && (
+                    <Badge className={`${getTypeColor(item.type)} px-2 py-1 text-xs rounded-full flex items-center gap-1`}>
+                      {getTypeIcon(item.type)}
+                      <span className="opacity-80">Type:</span>
+                      <span className="font-medium">{formatType(item.type)}</span>
+                    </Badge>
+                  )}
+                  {item.assignee && (
+                    <Badge variant="outline" className="px-2 py-1 text-xs rounded-full border-2 bg-white/50 dark:bg-gray-800/50 max-w-xs truncate">
+                      <Users className="h-3 w-3 mr-1 opacity-70" />
+                      <span className="truncate">{item.assignee}</span>
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-5 pb-5 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 border-t border-gray-100 dark:border-gray-700">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {item.created_at && (
+                <div>
+                  <span className="font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    Created:
+                  </span>
+                  <p className="text-gray-900 dark:text-white">
+                    {new Date(item.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 export function AnalysisSection({ analysis, isLoading }: AnalysisSectionProps) {
   // Note: isLoading is now handled at the button level, not here
   // This component always shows the analysis content when available
@@ -406,9 +490,38 @@ export function AnalysisSection({ analysis, isLoading }: AnalysisSectionProps) {
   const duration = analysis.duration_minutes || 0;
   const hours = Math.floor(duration / 60);
   const minutes = Math.floor(duration % 60);
+  
+  // Calculate time since last update
+  const getTimeSinceUpdate = () => {
+    if (!analysis.last_updated) return 'Unknown';
+    const lastUpdate = new Date(analysis.last_updated);
+    const now = new Date();
+    const diffMs = now.getTime() - lastUpdate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return lastUpdate.toLocaleDateString();
+  };
 
   return (
     <div className="space-y-6">
+      {/* Last Updated Info */}
+      <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-center gap-2 text-sm">
+          <RefreshCw className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="text-blue-900 dark:text-blue-100">
+            Last updated: <strong>{getTimeSinceUpdate()}</strong>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+          <Zap className="h-3 w-3" />
+          <span>Auto-updating every 2 minutes</span>
+        </div>
+      </div>
+      
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard

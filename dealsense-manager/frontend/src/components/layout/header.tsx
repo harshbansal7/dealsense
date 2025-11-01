@@ -91,26 +91,15 @@ export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right side - Search and user menu */}
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search agents, meetings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-
+        {/* Right side - Useful actions */}
+        <div className="flex items-center space-x-3">
           {/* Dark Mode Toggle */}
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleTheme}
             className="w-9 px-0"
+            title="Toggle theme"
           >
             {isDark ? (
               <Sun className="h-5 w-5 transition-all" />
@@ -120,10 +109,10 @@ export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {/* Notifications */}
+          {/* Notifications with real data */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative">
+              <Button variant="ghost" size="sm" className="relative" title="Notifications">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge
@@ -136,11 +125,12 @@ export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuLabel>Recent Activity</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
-                  No notifications
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recent activity</p>
                 </div>
               ) : (
                 notifications.slice(0, 5).map((notification) => (
@@ -160,24 +150,6 @@ export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
                   </DropdownMenuItem>
                 ))
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* User menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Help</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

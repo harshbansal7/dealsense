@@ -327,6 +327,19 @@ func (m *AgentManager) GetAnalystAgent(agentID string) *client.AnalystAgent {
 	return m.analysts[agentID]
 }
 
+// TriggerAnalysisUpdate manually triggers an analysis update for an analyst agent
+func (m *AgentManager) TriggerAnalysisUpdate(agentID string) error {
+	analyst := m.analysts[agentID]
+	if analyst == nil {
+		return fmt.Errorf("analyst agent not found or not started")
+	}
+
+	// Trigger the analysis update in a goroutine to avoid blocking
+	go analyst.UpdateAnalysisManually()
+
+	return nil
+}
+
 // handleUtterance processes utterances and generates LLM responses
 func (m *AgentManager) handleUtterance(agentID string, segments []map[string]interface{}) {
 	if len(segments) == 0 {

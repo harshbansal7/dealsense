@@ -210,6 +210,7 @@ export const agentsApi = {
   getLogs: (id: string, lines?: number) => api.get(`/agents/${id}/logs`, { params: { lines } }),
   getAnalysis: (id: string) => api.get<AnalysisData>(`/agents/${id}/analysis`),
   getFormattedAnalysis: (id: string) => api.get<string>(`/agents/${id}/analysis/formatted`),
+  triggerAnalysisUpdate: (id: string) => api.post(`/agents/${id}/analysis/update`),
 };
 
 export const meetingsApi = {

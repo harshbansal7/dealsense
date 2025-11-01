@@ -46,6 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 import { useAgentStore, useUIStore } from '@/lib/store';
 import { agentsApi } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const agentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -545,7 +546,10 @@ export default function CreateAgentPage() {
 
         <div className="max-w-7xl mx-auto">
           {/* Responsive Grid Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-8 lg:gap-12">
+          <div className={cn(
+            "grid gap-8 lg:gap-12 transition-all duration-300",
+            showPreview ? "grid-cols-1 xl:grid-cols-[1fr_360px]" : "grid-cols-1 max-w-4xl mx-auto"
+          )}>
             {/* Main Form Column */}
             <div className="space-y-8">
               <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">

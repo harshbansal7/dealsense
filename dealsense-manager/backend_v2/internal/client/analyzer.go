@@ -451,9 +451,34 @@ func (a *AnalystAgent) ProcessUtterance(segments []map[string]interface{}) {
 		logrus.Errorf("Failed to save analysis for agent %s: %v", a.agentID, err)
 	}
 
-	// Trigger analysis update if enough time has passed (every 5 minutes or significant new content)
-	// TODO: Use channels instead of this, will help ensure synchronization between the agent and the analyst agent.
-	if time.Since(a.lastAnalysis) > 3*time.Minute || (len(a.data.Transcript)%20 == 0 && len(a.data.Transcript) > 10) {
+	// Dynamic analysis trigger logic:
+	// - Every 2 minutes if there's substantial new content
+	// - When significant transcript milestones are reached (every 30 entries after first 10)
+	// - Immediate analysis for first 10 entries to provide quick initial insights
+	transcriptCount := len(a.data.Transcript)
+	timeSinceLastAnalysis := time.Since(a.lastAnalysis)
+
+	shouldTrigger := false
+
+	// Early analysis for quick feedback
+	if transcriptCount >= 5 && transcriptCount <= 15 && timeSinceLastAnalysis > 1*time.Minute {
+		shouldTrigger = true
+		logrus.Infof("Agent %s: Triggering early analysis for quick feedback (%d entries)", a.agentID, transcriptCount)
+	}
+
+	// Regular interval-based analysis
+	if timeSinceLastAnalysis > 2*time.Minute && transcriptCount > 15 {
+		shouldTrigger = true
+		logrus.Infof("Agent %s: Triggering time-based analysis (%.1f minutes since last)", a.agentID, timeSinceLastAnalysis.Minutes())
+	}
+
+	// Milestone-based analysis
+	if transcriptCount > 10 && transcriptCount%30 == 0 {
+		shouldTrigger = true
+		logrus.Infof("Agent %s: Triggering milestone-based analysis (%d entries)", a.agentID, transcriptCount)
+	}
+
+	if shouldTrigger {
 		go a.updateAnalysis()
 	}
 }
@@ -466,6 +491,11 @@ func (a *AnalystAgent) updateParticipants(speaker string) {
 		}
 	}
 	a.data.Participants = append(a.data.Participants, speaker)
+}
+
+// UpdateAnalysisManually provides external access to trigger analysis update
+func (a *AnalystAgent) UpdateAnalysisManually() {
+	a.updateAnalysis()
 }
 
 // updateAnalysis performs comprehensive analysis using LLM
@@ -641,12 +671,42 @@ func (a *AnalystAgent) extractKeyPoints() error {
 				return err
 			}
 
-			a.data.KeyPoints = result.KeyPoints
-			logrus.Infof("Agent %s: Successfully extracted %d key points",
-				a.agentID, len(result.KeyPoints))
+			// Intelligently merge key points instead of replacing
+			a.mergeKeyPoints(result.KeyPoints)
+			logrus.Infof("Agent %s: Successfully processed key points, total count: %d",
+				a.agentID, len(a.data.KeyPoints))
 		}
 	}
 	return nil
+}
+
+// mergeKeyPoints intelligently merges new key points with existing ones
+func (a *AnalystAgent) mergeKeyPoints(newPoints []string) {
+	// Create a set of existing key points (lowercase for comparison)
+	existingSet := make(map[string]bool)
+	for _, point := range a.data.KeyPoints {
+		existingSet[strings.ToLower(strings.TrimSpace(point))] = true
+	}
+
+	// Add only genuinely new key points
+	for _, newPoint := range newPoints {
+		newPointLower := strings.ToLower(strings.TrimSpace(newPoint))
+
+		// Check if it's truly new
+		isDuplicate := false
+		for existingPoint := range existingSet {
+			// Check for high similarity (> 80% word overlap)
+			if a.calculateSimilarity(newPointLower, existingPoint) > 0.8 {
+				isDuplicate = true
+				break
+			}
+		}
+
+		if !isDuplicate && newPoint != "" {
+			a.data.KeyPoints = append(a.data.KeyPoints, newPoint)
+			existingSet[newPointLower] = true
+		}
+	}
 }
 
 // identifyActionItems finds actionable items in the transcript
@@ -686,12 +746,111 @@ func (a *AnalystAgent) identifyActionItems() error {
 				return err
 			}
 
-			a.data.ActionItems = result.ActionItems
-			logrus.Infof("Agent %s: Successfully identified %d action items",
-				a.agentID, len(result.ActionItems))
+			// Intelligently merge action items instead of replacing
+			a.mergeActionItems(result.ActionItems)
+			logrus.Infof("Agent %s: Successfully processed action items, total count: %d",
+				a.agentID, len(a.data.ActionItems))
 		}
 	}
 	return nil
+}
+
+// mergeActionItems intelligently merges new action items with existing ones
+func (a *AnalystAgent) mergeActionItems(newItems []ActionItem) {
+	// Create a map of existing items by description similarity
+	existingMap := make(map[string]*ActionItem)
+	for i := range a.data.ActionItems {
+		existingMap[strings.ToLower(a.data.ActionItems[i].Description)] = &a.data.ActionItems[i]
+	}
+
+	for _, newItem := range newItems {
+		// Generate unique ID if not present
+		if newItem.ID == "" {
+			newItem.ID = fmt.Sprintf("action_%d", time.Now().UnixNano())
+		}
+
+		// Set creation time if not present
+		if newItem.CreatedAt.IsZero() {
+			newItem.CreatedAt = time.Now()
+		}
+
+		// Set default status if empty
+		if newItem.Status == "" {
+			newItem.Status = "pending"
+		}
+
+		// Check for duplicates or similar items
+		descLower := strings.ToLower(newItem.Description)
+		isDuplicate := false
+
+		for existingDesc, existingItem := range existingMap {
+			// Simple similarity check: if 70% of words match, consider it duplicate
+			if a.calculateSimilarity(descLower, existingDesc) > 0.7 {
+				// Update priority if the new one is higher
+				if a.comparePriority(newItem.Priority, existingItem.Priority) > 0 {
+					existingItem.Priority = newItem.Priority
+				}
+				// Update type if more specific
+				if newItem.Type != "" && existingItem.Type == "" {
+					existingItem.Type = newItem.Type
+				}
+				isDuplicate = true
+				break
+			}
+		}
+
+		// Add if not duplicate
+		if !isDuplicate {
+			a.data.ActionItems = append(a.data.ActionItems, newItem)
+			existingMap[descLower] = &newItem
+		}
+	}
+}
+
+// calculateSimilarity computes simple word-based similarity between two strings
+func (a *AnalystAgent) calculateSimilarity(s1, s2 string) float64 {
+	words1 := strings.Fields(s1)
+	words2 := strings.Fields(s2)
+
+	if len(words1) == 0 || len(words2) == 0 {
+		return 0.0
+	}
+
+	// Count matching words
+	matches := 0
+	for _, w1 := range words1 {
+		for _, w2 := range words2 {
+			if w1 == w2 {
+				matches++
+				break
+			}
+		}
+	}
+
+	// Calculate similarity as ratio of matches to total unique words
+	totalWords := float64(len(words1) + len(words2))
+	return float64(matches*2) / totalWords
+}
+
+// comparePriority returns > 0 if p1 is higher priority than p2
+func (a *AnalystAgent) comparePriority(p1, p2 string) int {
+	priorityMap := map[string]int{
+		"high":   3,
+		"medium": 2,
+		"low":    1,
+	}
+
+	v1, ok1 := priorityMap[p1]
+	v2, ok2 := priorityMap[p2]
+
+	if !ok1 {
+		v1 = 2 // default to medium
+	}
+	if !ok2 {
+		v2 = 2
+	}
+
+	return v1 - v2
 }
 
 // extractTopics identifies main discussion topics
@@ -722,10 +881,72 @@ func (a *AnalystAgent) extractTopics() error {
 				// Don't return error, just log and continue
 				return nil
 			}
-			a.data.Topics = result.Topics
+			// Merge topics instead of replacing
+			a.mergeTopics(result.Topics)
 		}
 	}
 	return nil
+}
+
+// mergeTopics intelligently merges new topics with existing ones
+func (a *AnalystAgent) mergeTopics(newTopics []TopicDiscussion) {
+	// Create a map of existing topics by topic name (lowercase)
+	existingMap := make(map[string]*TopicDiscussion)
+	for i := range a.data.Topics {
+		topicKey := strings.ToLower(strings.TrimSpace(a.data.Topics[i].Topic))
+		existingMap[topicKey] = &a.data.Topics[i]
+	}
+
+	for _, newTopic := range newTopics {
+		topicKey := strings.ToLower(strings.TrimSpace(newTopic.Topic))
+
+		// Check if similar topic exists
+		found := false
+		for existingKey, existingTopic := range existingMap {
+			if a.calculateSimilarity(topicKey, existingKey) > 0.7 {
+				// Update duration if longer
+				if newTopic.Duration > existingTopic.Duration {
+					existingTopic.Duration = newTopic.Duration
+				}
+				// Merge participants
+				existingTopic.Participants = a.mergeParticipants(existingTopic.Participants, newTopic.Participants)
+				// Update summary if more detailed
+				if len(newTopic.Summary) > len(existingTopic.Summary) {
+					existingTopic.Summary = newTopic.Summary
+				}
+				found = true
+				break
+			}
+		}
+
+		// Add if not found
+		if !found && newTopic.Topic != "" {
+			a.data.Topics = append(a.data.Topics, newTopic)
+			existingMap[topicKey] = &newTopic
+		}
+	}
+}
+
+// mergeParticipants merges two participant lists removing duplicates
+func (a *AnalystAgent) mergeParticipants(list1, list2 []string) []string {
+	seen := make(map[string]bool)
+	result := []string{}
+
+	for _, p := range list1 {
+		if !seen[p] {
+			result = append(result, p)
+			seen[p] = true
+		}
+	}
+
+	for _, p := range list2 {
+		if !seen[p] {
+			result = append(result, p)
+			seen[p] = true
+		}
+	}
+
+	return result
 }
 
 // analyzeSentimentAndKeywords performs sentiment analysis and keyword extraction
