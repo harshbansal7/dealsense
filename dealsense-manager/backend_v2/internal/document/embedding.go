@@ -40,7 +40,7 @@ type EmbeddingResult struct {
 // NewEmbeddingService creates a new Vertex AI embedding service
 func NewEmbeddingService(config EmbeddingConfig) (*EmbeddingService, error) {
 	ctx := context.Background()
-	
+
 	var client *aiplatform.PredictionClient
 	var err error
 
@@ -112,13 +112,24 @@ func (e *EmbeddingService) GenerateEmbeddings(texts []string) ([]*EmbeddingResul
 		instances = append(instances, instance)
 	}
 
+	// --- START: ADDITION ---
+	// Create parameters to specify output dimension
+	params, err := structpb.NewValue(map[string]interface{}{
+		"outputDimensionality": 768,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create parameters: %w", err)
+	}
+	// --- END: ADDITION ---
+
 	// Create prediction request
 	req := &aiplatformpb.PredictRequest{
-		Endpoint:  e.endpoint,
-		Instances: instances,
+		Endpoint:   e.endpoint,
+		Instances:  instances,
+		Parameters: params,
 	}
 
-	// Call prediction API
+	// Call prediction APIs
 	resp, err := e.client.Predict(e.ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate embeddings: %w", err)
@@ -147,7 +158,7 @@ func (e *EmbeddingService) GenerateEmbeddings(texts []string) ([]*EmbeddingResul
 // extractEmbedding extracts the embedding vector from prediction response
 func (e *EmbeddingService) extractEmbedding(prediction *structpb.Value) ([]float32, error) {
 	predMap := prediction.GetStructValue().AsMap()
-	
+
 	// The response structure is: {"embeddings": {"values": [...]}}
 	embeddingsRaw, ok := predMap["embeddings"]
 	if !ok {
@@ -223,11 +234,11 @@ func (e *EmbeddingService) SearchSimilarChunks(queryEmbedding []float32, chunks 
 		}
 
 		results = append(results, SimilarityResult{
-			ChunkText:   chunk.Text,
-			ChunkIndex:  chunk.ChunkIndex,
-			PageNumber:  chunk.PageNumber,
-			Similarity:  similarity,
-			Metadata:    chunk.Metadata,
+			ChunkText:  chunk.Text,
+			ChunkIndex: chunk.ChunkIndex,
+			PageNumber: chunk.PageNumber,
+			Similarity: similarity,
+			Metadata:   chunk.Metadata,
 		})
 	}
 
@@ -259,11 +270,11 @@ type ChunkWithEmbedding struct {
 
 // SimilarityResult represents a chunk with its similarity score
 type SimilarityResult struct {
-	ChunkText   string                 `json:"chunk_text"`
-	ChunkIndex  int                    `json:"chunk_index"`
-	PageNumber  int                    `json:"page_number"`
-	Similarity  float32                `json:"similarity"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	ChunkText  string                 `json:"chunk_text"`
+	ChunkIndex int                    `json:"chunk_index"`
+	PageNumber int                    `json:"page_number"`
+	Similarity float32                `json:"similarity"`
+	Metadata   map[string]interface{} `json:"metadata"`
 }
 
 // EmbeddingToJSON converts an embedding to JSON string for database storage
@@ -291,4 +302,3 @@ func (e *EmbeddingService) Close() error {
 	}
 	return nil
 }
-

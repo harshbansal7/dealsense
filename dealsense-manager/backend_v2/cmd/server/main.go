@@ -209,11 +209,32 @@ func initializeDocumentServices(cfg *config.Config, db *database.Database) (*doc
 		return nil, fmt.Errorf("failed to initialize embedding service: %w", err)
 	}
 
+	// Initialize vector search config if enabled
+	var vectorSearchConfig *document.VectorSearchConfig
+	if cfg.Google.VertexAI.VectorSearch.Enabled {
+		vectorSearchConfig = &document.VectorSearchConfig{
+			ProjectID:            cfg.Google.ProjectID,
+			ProjectNumber:        cfg.Google.VertexAI.VectorSearch.ProjectNumber,
+			Location:             cfg.Google.VertexAI.Location,
+			IndexID:              cfg.Google.VertexAI.VectorSearch.IndexID,
+			IndexEndpointID:      cfg.Google.VertexAI.VectorSearch.IndexEndpointID,
+			DeployedIndexID:      cfg.Google.VertexAI.VectorSearch.DeployedIndexID,
+			PublicEndpointDomain: cfg.Google.VertexAI.VectorSearch.PublicEndpointDomain,
+			CredentialsJSON:      cfg.Google.VertexAI.CredentialsJSON,
+			UseDefaultCreds:      cfg.Google.VertexAI.UseDefaultCredentials,
+			Enabled:              true,
+		}
+		logrus.Info("Vector Search configuration loaded")
+	} else {
+		logrus.Info("Vector Search disabled, using PostgreSQL JSONB for embeddings")
+	}
+
 	// Initialize document service
 	docService, err := document.NewService(db, document.ServiceConfig{
-		Storage:   storageConfig,
-		Processor: processorConfig,
-		Embedding: embeddingConfig,
+		Storage:      storageConfig,
+		Processor:    processorConfig,
+		Embedding:    embeddingConfig,
+		VectorSearch: vectorSearchConfig,
 	})
 
 	if err != nil {

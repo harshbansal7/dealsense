@@ -101,39 +101,65 @@ func (c *ChatbotService) Query(req ChatRequest) (*ChatResponse, error) {
 	allContext := append(documentContext, meetingContext...)
 	allSources := append(docSources, meetingSources...)
 
-	if len(allContext) == 0 {
-		// Provide more specific feedback about what context is missing
-		var docCount int64
-		c.db.Model(&database.Document{}).Where("agent_id = ? AND status = ?", req.AgentID, "processed").Count(&docCount)
+	// Get counts for better messaging
+	var docCount int64
+	c.db.Model(&database.Document{}).Where("agent_id = ? AND status = ?", req.AgentID, "processed").Count(&docCount)
 
-		var meetingCount int64
-		c.db.Model(&database.TranscriptSegment{}).Where("agent_id = ?", req.AgentID).Count(&meetingCount)
+	var meetingCount int64
+	c.db.Model(&database.TranscriptSegment{}).Where("agent_id = ?", req.AgentID).Count(&meetingCount)
 
-		responseMsg := "I don't have enough context to answer that question."
-		if docCount == 0 && meetingCount == 0 {
-			responseMsg += " No documents or meeting transcripts have been uploaded for this agent."
-		} else if docCount == 0 {
-			responseMsg += " No processed documents are available, but meeting transcripts exist."
-		} else if meetingCount == 0 {
-			responseMsg += fmt.Sprintf(" %d document(s) are processed, but no meeting transcripts are available.", docCount)
-		} else {
-			responseMsg += fmt.Sprintf(" Found %d processed document(s) and meeting data, but no relevant context matched your query.", docCount)
-		}
-		responseMsg += " Please ensure documents are uploaded and processed, or that there's meeting data available."
+	// Log what context is available
+	hasDocContext := len(documentContext) > 0
+	hasMeetingContext := len(meetingContext) > 0
+	hasAnyData := docCount > 0 || meetingCount > 0
 
+	if hasDocContext && !hasMeetingContext {
+		logrus.Infof("Using document context only (%d chunks)", len(documentContext))
+	} else if !hasDocContext && hasMeetingContext {
+		logrus.Infof("Using meeting transcript context only (%d chunks)", len(meetingContext))
+	} else if hasDocContext && hasMeetingContext {
+		logrus.Infof("Using both document (%d) and meeting (%d) context", len(documentContext), len(meetingContext))
+	} else if hasAnyData {
+		logrus.Infof("Data available (docs: %d, transcripts: %d) but no relevant context found", docCount, meetingCount)
+	} else {
+		logrus.Infof("No data available for this agent")
+	}
+
+	// ONLY return predefined message if BOTH documents AND transcripts are completely absent
+	if len(allContext) == 0 && docCount == 0 && meetingCount == 0 {
 		return &ChatResponse{
 			SessionID:    req.SessionID,
 			Query:        req.Query,
-			Response:     responseMsg,
+			Response:     "I don't have any data to work with. No documents or meeting transcripts have been uploaded for this agent yet. Please upload some documents or start a meeting to enable me to answer your questions.",
 			ResponseTime: float64(time.Since(startTime).Milliseconds()) / 1000.0,
 		}, nil
+	}
+
+	// If we have data but no relevant context, let the LLM handle it gracefully
+	// The LLM will be informed about what data sources are available
+	if len(allContext) == 0 {
+		logrus.Warnf("No relevant context found, but proceeding with LLM using general knowledge")
+		// Create an informative context chunk to guide the LLM
+		infoChunk := ContextChunk{
+			Text:       fmt.Sprintf("Note: The system searched through %d document(s) and meeting transcripts but did not find specific content matching this query. The available data may not contain information relevant to this question.", docCount),
+			Source:     "system",
+			PageNumber: 0,
+			Similarity: 0,
+		}
+		allContext = append(allContext, infoChunk)
 	}
 
 	// Step 4: Build prompt with retrieved context
 	prompt := c.buildRAGPrompt(req.Query, allContext)
 
 	// Step 5: Call LLM
-	response, err := c.llmProvider.CallWithGrounding(prompt)
+	response, err := c.llmProvider.CallWithGrounding(prompt, map[string]interface{}{
+		"maxOutputTokens": 2000,
+		"temperature":     1,
+		"topP":            0.6,
+		"topK":            40,
+	})
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get LLM response: %w", err)
 	}
@@ -263,25 +289,80 @@ func (c *ChatbotService) retrieveMeetingContext(req ChatRequest) ([]ContextChunk
 func (c *ChatbotService) buildRAGPrompt(query string, contexts []ContextChunk) string {
 	var prompt strings.Builder
 
-	prompt.WriteString("You are an intelligent assistant helping analyze meeting data and startup documents. ")
-	prompt.WriteString("Answer the user's question based on the provided context. ")
-	prompt.WriteString("If the context doesn't contain enough information to answer the question, say so.\n\n")
-
-	prompt.WriteString("CONTEXT:\n")
-	prompt.WriteString("---\n")
-	for i, ctx := range contexts {
-		prompt.WriteString(fmt.Sprintf("\n[Context %d - Source: %s", i+1, ctx.Source))
-		if ctx.PageNumber > 0 {
-			prompt.WriteString(fmt.Sprintf(", Page: %d", ctx.PageNumber))
+	// Count context sources
+	docContextCount := 0
+	meetingContextCount := 0
+	systemContextCount := 0
+	for _, ctx := range contexts {
+		if ctx.Source == "document" {
+			docContextCount++
+		} else if ctx.Source == "meeting" {
+			meetingContextCount++
+		} else if ctx.Source == "system" {
+			systemContextCount++
 		}
-		prompt.WriteString("]\n")
-		prompt.WriteString(ctx.Text)
-		prompt.WriteString("\n")
 	}
-	prompt.WriteString("---\n\n")
+
+	prompt.WriteString("You are an intelligent assistant helping analyze startup meetings and pitch documents. ")
+
+	// Provide clear guidance based on available data
+	if docContextCount > 0 && meetingContextCount > 0 {
+		prompt.WriteString("You have access to both pitch documents and meeting transcripts. ")
+		prompt.WriteString("Use all available context to provide a comprehensive answer. ")
+	} else if docContextCount > 0 {
+		prompt.WriteString("You have access to pitch documents only. ")
+		prompt.WriteString("If the question is about meeting discussions or conversations, acknowledge that meeting transcripts are not available. ")
+		prompt.WriteString("Focus on what you can learn from the documents. ")
+	} else if meetingContextCount > 0 {
+		prompt.WriteString("You have access to meeting transcripts only. ")
+		prompt.WriteString("If the question requires information from pitch documents or detailed startup materials, acknowledge that documents are not available. ")
+		prompt.WriteString("Focus on what was discussed in the meeting. ")
+	} else if systemContextCount > 0 {
+		// System context indicates data exists but wasn't relevant
+		prompt.WriteString("Note: The available data did not contain specific information matching this query. ")
+		prompt.WriteString("Provide a helpful response based on your general knowledge, but clearly indicate that this is not from the uploaded data. ")
+	}
+
+	prompt.WriteString("Always be honest about what information you have and don't have. ")
+	prompt.WriteString("If you can partially answer, do so and explain what additional information would be needed.\n\n")
+
+	// Only include context section if there's actual content (not just system messages)
+	if docContextCount > 0 || meetingContextCount > 0 {
+		prompt.WriteString("AVAILABLE CONTEXT:\n")
+		prompt.WriteString("---\n")
+		for i, ctx := range contexts {
+			// Skip system context in the detailed listing
+			if ctx.Source == "system" {
+				continue
+			}
+			prompt.WriteString(fmt.Sprintf("\n[Context %d - Source: %s", i+1, ctx.Source))
+			if ctx.PageNumber > 0 {
+				prompt.WriteString(fmt.Sprintf(", Page: %d", ctx.PageNumber))
+			}
+			if ctx.Similarity > 0 {
+				prompt.WriteString(fmt.Sprintf(", Relevance: %.2f", ctx.Similarity))
+			}
+			prompt.WriteString("]\n")
+			prompt.WriteString(ctx.Text)
+			prompt.WriteString("\n")
+		}
+		prompt.WriteString("---\n\n")
+	} else {
+		// Only system context - remind about limitations
+		for _, ctx := range contexts {
+			if ctx.Source == "system" {
+				prompt.WriteString(fmt.Sprintf("SYSTEM NOTE: %s\n\n", ctx.Text))
+			}
+		}
+	}
 
 	prompt.WriteString(fmt.Sprintf("USER QUESTION: %s\n\n", query))
-	prompt.WriteString("ANSWER: Based on the context provided, ")
+
+	if docContextCount > 0 || meetingContextCount > 0 {
+		prompt.WriteString("ANSWER: Based on the context provided above, ")
+	} else {
+		prompt.WriteString("ANSWER: ")
+	}
 
 	return prompt.String()
 }

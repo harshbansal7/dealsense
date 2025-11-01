@@ -178,8 +178,13 @@ type Document struct {
 	StoragePath  string     `gorm:"not null" json:"storage_path"` // GCS path
 	GCSBucket    string     `gorm:"not null" json:"gcs_bucket"`
 	ProcessedAt  *time.Time `gorm:"" json:"processed_at,omitempty"`
-	Status       string     `gorm:"not null;default:'uploaded'" json:"status"` // uploaded, processing, processed, failed
+	Status       string     `gorm:"not null;default:'uploaded'" json:"status"` // uploaded, processing, processing_batch, processed, failed
 	ErrorMessage string     `gorm:"type:text" json:"error_message,omitempty"`
+
+	// Batch processing tracking
+	UsedBatchProcessing bool   `gorm:"default:false" json:"used_batch_processing"`
+	BatchOperationName  string `gorm:"" json:"batch_operation_name,omitempty"`
+	BatchOutputPath     string `gorm:"" json:"batch_output_path,omitempty"`
 
 	// Extracted content
 	ExtractedText string `gorm:"type:text" json:"extracted_text"`
@@ -203,9 +208,13 @@ type DocumentEmbedding struct {
 	ChunkText     string    `gorm:"type:text;not null"`
 	ChunkMetadata string    `gorm:"type:jsonb"` // page number, section, etc
 
-	// Vector embedding (stored as JSONB array for now, can use pgvector extension later)
-	Embedding      string `gorm:"type:jsonb;not null"`
+	// Vector embedding (stored as JSONB for backward compatibility, prefer Vector Search)
+	Embedding      string `gorm:"type:jsonb"` // Optional: only populated if not using Vector Search
 	EmbeddingModel string `gorm:"not null;default:'text-embedding-004'"` // Vertex AI model
+
+	// Vector Search integration
+	VectorSearchID      string `gorm:"index" json:"vector_search_id"`                // Datapoint ID in Vector Search
+	StoredInVectorSearch bool   `gorm:"default:false" json:"stored_in_vector_search"` // Whether stored in Vector Search
 
 	// Relationships
 	Document Document `gorm:"constraint:OnDelete:CASCADE"`

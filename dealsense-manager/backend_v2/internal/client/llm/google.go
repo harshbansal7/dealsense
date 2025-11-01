@@ -133,7 +133,7 @@ func (p *GoogleProvider) Call(prompt string) (string, error) {
 }
 
 // CallWithGrounding makes a request to the Google AI API with search grounding enabled
-func (p *GoogleProvider) CallWithGrounding(prompt string) (*GroundedResponse, error) {
+func (p *GoogleProvider) CallWithGrounding(prompt string, generationConfig map[string]interface{}) (*GroundedResponse, error) {
 	// Generate unique prompt ID for tracking
 	promptID := generatePromptID()
 
@@ -176,12 +176,13 @@ func (p *GoogleProvider) CallWithGrounding(prompt string) (*GroundedResponse, er
 		},
 	}
 
-	// Configure generation settings with grounding
-	generationConfig := map[string]interface{}{
-		"maxOutputTokens": 2000,
-		"temperature":     0.3,
-		"topP":            0.95,
-		"topK":            40,
+	if generationConfig == nil {
+		generationConfig = map[string]interface{}{
+			"maxOutputTokens": 2000,
+			"temperature":     0.3,
+			"topP":            0.95,
+			"topK":            40,
+		}
 	}
 
 	// Add grounding tool

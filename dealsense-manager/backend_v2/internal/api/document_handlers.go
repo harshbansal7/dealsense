@@ -232,7 +232,7 @@ func (h *DocumentHandler) SearchDocuments(c *gin.Context) {
 	}
 
 	if req.TopK <= 0 {
-		req.TopK = 5
+		req.TopK = 1
 	}
 
 	results, err := h.documentService.SearchDocuments(agentID, req.Query, req.TopK)
@@ -327,4 +327,60 @@ func (h *DocumentHandler) GetStartupAnalysis(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, analysis)
+}
+
+// GetDocumentStatus handles GET /documents/:document_id/status
+// Provides detailed status information including batch processing progress
+func (h *DocumentHandler) GetDocumentStatus(c *gin.Context) {
+	docIDStr := c.Param("document_id")
+	docID, err := uuid.Parse(docIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid document ID"})
+		return
+	}
+
+	doc, err := h.documentService.GetDocument(docID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	response := gin.H{
+		"id":                    doc.ID.String(),
+		"status":                doc.Status,
+		"file_size":             doc.FileSize,
+		"page_count":            doc.PageCount,
+		"used_batch_processing": doc.UsedBatchProcessing,
+	}
+
+	// Add batch processing info if applicable
+	if doc.UsedBatchProcessing {
+		response["batch_operation_name"] = doc.BatchOperationName
+		response["batch_output_path"] = doc.BatchOutputPath
+	}
+
+	// Add processed timestamp if available
+	if doc.ProcessedAt != nil {
+		response["processed_at"] = doc.ProcessedAt.Format(time.RFC3339)
+	}
+
+	// Add error message if failed
+	if doc.Status == "failed" && doc.ErrorMessage != "" {
+		response["error_message"] = doc.ErrorMessage
+	}
+
+	// Calculate estimated completion time for batch processing
+	if doc.Status == "processing_batch" {
+		// Estimate: batch processing typically takes 10-30 minutes
+		timeSinceCreation := time.Since(doc.CreatedAt)
+		estimatedMinutes := 15 // Average estimate
+		if timeSinceCreation.Minutes() < float64(estimatedMinutes) {
+			response["estimated_completion_minutes"] = estimatedMinutes - int(timeSinceCreation.Minutes())
+		} else {
+			response["estimated_completion_minutes"] = 0
+			response["note"] = "Processing is taking longer than expected, but is still in progress"
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
 }

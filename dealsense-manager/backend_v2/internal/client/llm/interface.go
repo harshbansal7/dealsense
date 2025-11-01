@@ -43,7 +43,7 @@ type LLMProvider interface {
 // GroundingCapableProvider extends LLMProvider with grounding capabilities
 type GroundingCapableProvider interface {
 	LLMProvider
-	CallWithGrounding(prompt string) (*GroundedResponse, error)
+	CallWithGrounding(prompt string, generationConfig map[string]interface{}) (*GroundedResponse, error)
 }
 
 // GetProvider returns the appropriate LLM provider based on configuration

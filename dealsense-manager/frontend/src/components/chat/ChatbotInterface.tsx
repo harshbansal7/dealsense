@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, MessageSquare, FileText } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, FileText, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,17 +22,121 @@ interface ChatMessage extends ApiChatMessage {
   isLoading?: boolean;
 }
 
+interface ChatSession {
+  sessionId: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  lastActivity: string;
+}
+
 const generateSessionId = () => {
   return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+const getStorageKey = (agentId: string) => `dealsense_chat_${agentId}`;
+
+const saveChatSession = (agentId: string, session: ChatSession) => {
+  try {
+    const sessions = loadChatSessions(agentId);
+    const updatedSessions = sessions.filter(s => s.sessionId !== session.sessionId);
+    updatedSessions.unshift(session); // Add to front (most recent)
+
+    // Keep only last 5 sessions per agent
+    const trimmedSessions = updatedSessions.slice(0, 5);
+
+    localStorage.setItem(getStorageKey(agentId), JSON.stringify(trimmedSessions));
+  } catch (error) {
+    console.warn('Failed to save chat session:', error);
+  }
+};
+
+const loadChatSessions = (agentId: string): ChatSession[] => {
+  try {
+    const stored = localStorage.getItem(getStorageKey(agentId));
+    if (!stored) return [];
+
+    const sessions: ChatSession[] = JSON.parse(stored);
+    return sessions.filter(session =>
+      session.sessionId &&
+      Array.isArray(session.messages) &&
+      session.messages.length > 0
+    );
+  } catch (error) {
+    console.warn('Failed to load chat sessions:', error);
+    return [];
+  }
+};
+
+const clearChatSessions = (agentId: string) => {
+  try {
+    localStorage.removeItem(getStorageKey(agentId));
+  } catch (error) {
+    console.warn('Failed to clear chat sessions:', error);
+  }
 };
 
 export function ChatbotInterface({ agentId, sessionId: initialSessionId }: ChatbotInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState(initialSessionId || generateSessionId());
+  const [sessionId, setSessionId] = useState(initialSessionId || '');
+  const [availableSessions, setAvailableSessions] = useState<ChatSession[]>([]);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load existing chat sessions on mount
+  useEffect(() => {
+    const sessions = loadChatSessions(agentId);
+    setAvailableSessions(sessions);
+
+    // If initialSessionId is provided, try to load that specific session
+    if (initialSessionId) {
+      const targetSession = sessions.find(s => s.sessionId === initialSessionId);
+      if (targetSession) {
+        setCurrentSession(targetSession);
+        setMessages(targetSession.messages);
+        setSessionId(targetSession.sessionId);
+      } else {
+        // Session not found, create new one with the provided ID
+        setSessionId(initialSessionId);
+        setCurrentSession({
+          sessionId: initialSessionId,
+          messages: [],
+          createdAt: new Date().toISOString(),
+          lastActivity: new Date().toISOString(),
+        });
+      }
+    } else if (sessions.length > 0) {
+      // Load most recent session
+      const mostRecent = sessions[0];
+      setCurrentSession(mostRecent);
+      setMessages(mostRecent.messages);
+      setSessionId(mostRecent.sessionId);
+    } else {
+      // No existing sessions, create new one
+      startNewChat();
+    }
+  }, [agentId]); // eslint-disable-line react-hooks/exhaustive-deps -- initialSessionId intentionally excluded to avoid infinite loops
+
+  // Save current session whenever messages change
+  useEffect(() => {
+    if (sessionId && messages.length > 0 && !messages.some(m => m.isLoading)) {
+      const createdAt = currentSession?.createdAt || new Date().toISOString();
+      const session: ChatSession = {
+        sessionId,
+        messages,
+        createdAt,
+        lastActivity: new Date().toISOString(),
+      };
+      saveChatSession(agentId, session);
+      setCurrentSession(session);
+
+      // Update available sessions list
+      const sessions = loadChatSessions(agentId);
+      setAvailableSessions(sessions);
+    }
+  }, [messages, sessionId, agentId, currentSession?.createdAt]);
 
   useEffect(() => {
     scrollToBottom();
@@ -40,6 +144,40 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const startNewChat = () => {
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
+    setMessages([]);
+    setCurrentSession({
+      sessionId: newSessionId,
+      messages: [],
+      createdAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+    });
+  };
+
+  const loadChatSession = (session: ChatSession) => {
+    setCurrentSession(session);
+    setMessages(session.messages);
+    setSessionId(session.sessionId);
+  };
+
+  const deleteChatSession = (sessionIdToDelete: string) => {
+    try {
+      const sessions = loadChatSessions(agentId);
+      const updatedSessions = sessions.filter(s => s.sessionId !== sessionIdToDelete);
+      localStorage.setItem(getStorageKey(agentId), JSON.stringify(updatedSessions));
+      setAvailableSessions(updatedSessions);
+
+      // If we deleted the current session, start a new one
+      if (sessionId === sessionIdToDelete) {
+        startNewChat();
+      }
+    } catch (error) {
+      console.warn('Failed to delete chat session:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,13 +281,48 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          AI Assistant
-        </CardTitle>
-        <CardDescription>
-          Ask questions about the meeting transcript and uploaded documents
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              AI Assistant
+            </CardTitle>
+            <CardDescription>
+              Ask questions about the meeting transcript and uploaded documents
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            {availableSessions.length > 0 && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={sessionId}
+                  onChange={(e) => {
+                    const selectedSession = availableSessions.find(s => s.sessionId === e.target.value);
+                    if (selectedSession) {
+                      loadChatSession(selectedSession);
+                    }
+                  }}
+                  className="text-xs px-2 py-1 border rounded bg-white dark:bg-gray-800"
+                >
+                  {availableSessions.map((session) => (
+                    <option key={session.sessionId} value={session.sessionId}>
+                      Session {session.sessionId.slice(0, 8)}... ({session.messages.length} msgs)
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={startNewChat}
+                  className="text-xs"
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  New Chat
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0 pb-4">
         {/* Messages Area */}
@@ -159,12 +332,15 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
               <div className="text-center py-8">
                 <Bot className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Ask me anything!
+                  {currentSession ? 'Continue your conversation!' : 'Ask me anything!'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  I can help you analyze meeting transcripts and documents
+                  {currentSession
+                    ? 'Pick up where you left off or start fresh'
+                    : 'I can help you analyze meeting transcripts and documents'
+                  }
                 </p>
-                
+
                 {/* Suggested Questions */}
                 <div className="text-left max-w-2xl mx-auto">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
@@ -274,7 +450,14 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
 
         {/* Session Info */}
         <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>{messages.filter(m => m.role !== 'user' && !m.isLoading).length} responses</span>
+          <div className="flex items-center gap-4">
+            <span>{messages.filter(m => m.role === 'assistant' && !m.isLoading).length} responses</span>
+            {currentSession && (
+              <span>
+                Started: {new Date(currentSession.createdAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
           <Badge variant="outline" className="text-xs">
             Session: {sessionId.slice(0, 12)}...
           </Badge>

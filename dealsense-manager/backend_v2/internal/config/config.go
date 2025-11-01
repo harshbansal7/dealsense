@@ -85,10 +85,21 @@ type DocumentAIConfig struct {
 
 // VertexAIConfig represents Vertex AI configuration
 type VertexAIConfig struct {
-	Location              string `yaml:"location"`
-	EmbeddingModel        string `yaml:"embedding_model"`
-	UseDefaultCredentials bool   `yaml:"use_default_credentials"`
-	CredentialsJSON       string `yaml:"credentials_json"`
+	Location              string             `yaml:"location"`
+	EmbeddingModel        string             `yaml:"embedding_model"`
+	UseDefaultCredentials bool               `yaml:"use_default_credentials"`
+	CredentialsJSON       string             `yaml:"credentials_json"`
+	VectorSearch          VectorSearchConfig `yaml:"vector_search"`
+}
+
+// VectorSearchConfig represents Vector Search configuration
+type VectorSearchConfig struct {
+	Enabled              bool   `yaml:"enabled"`
+	ProjectNumber        string `yaml:"project_number"`         // Optional: GCP project number (e.g., "33593473489"). If not set, uses project_id.
+	IndexID              string `yaml:"index_id"`               // Just the index ID (e.g., "3413880250151469056")
+	IndexEndpointID      string `yaml:"index_endpoint_id"`      // Just the endpoint ID (e.g., "6674108148367753216")
+	DeployedIndexID      string `yaml:"deployed_index_id"`      // Optional: Deployed index ID (e.g., "dealsense_deployed"). Defaults to "dealsense_deployed".
+	PublicEndpointDomain string `yaml:"public_endpoint_domain"` // REQUIRED: Public VDB endpoint (e.g., "266063970.us-central1-33593473489.vdb.vertexai.goog")
 }
 
 // DatabaseConfig represents database configuration

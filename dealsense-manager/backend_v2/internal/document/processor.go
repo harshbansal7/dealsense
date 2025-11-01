@@ -26,9 +26,10 @@ type ProcessorConfig struct {
 
 // DocumentProcessor handles document processing with Google Document AI
 type DocumentProcessor struct {
-	client *documentai.DocumentProcessorClient
-	config ProcessorConfig
-	ctx    context.Context
+	client         *documentai.DocumentProcessorClient
+	batchProcessor *BatchProcessor
+	config         ProcessorConfig
+	ctx            context.Context
 }
 
 // ProcessedDocument represents the result of document processing

@@ -556,7 +556,7 @@ func (a *AnalystAgent) generateSummary() error {
 	if groundingProvider, ok := a.llmProvider.(llm.GroundingCapableProvider); ok {
 		logrus.Infof("Agent %s: Using grounded call for summary generation", a.agentID)
 
-		groundedResponse, err := groundingProvider.CallWithGrounding(prompt)
+		groundedResponse, err := groundingProvider.CallWithGrounding(prompt, nil) 
 		if err != nil {
 			logrus.Warnf("Grounded call failed for summary, falling back to regular call: %v", err)
 			return err
@@ -615,7 +615,7 @@ func (a *AnalystAgent) extractKeyPoints() error {
 	// Try grounded call first if provider supports it
 	if groundingProvider, ok := a.llmProvider.(llm.GroundingCapableProvider); ok {
 		logrus.Infof("Agent %s: Using grounded call for key points extraction", a.agentID)
-		groundedResponse, err := groundingProvider.CallWithGrounding(prompt)
+		groundedResponse, err := groundingProvider.CallWithGrounding(prompt, nil)
 		if err != nil {
 			logrus.Warnf("Grounded call failed for key points, falling back to regular call: %v", err)
 		} else {

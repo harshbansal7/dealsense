@@ -86,6 +86,7 @@ func SetupRouter(cfg *config.Config, agentManager *services.AgentManager, db *da
 			documents.GET("/:document_id", docHandler.GetDocument)
 			documents.DELETE("/:document_id", docHandler.DeleteDocument)
 			documents.GET("/:document_id/download", docHandler.GetDocumentDownloadURL)
+			documents.GET("/:document_id/status", docHandler.GetDocumentStatus)
 		}
 	}
 
