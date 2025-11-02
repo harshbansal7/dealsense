@@ -285,7 +285,7 @@
   }
 
   .animate-shimmer {
-    animation: shimmer 1.5s ease-in-out infinite;
+    animation: shimmer 0.75s ease-in-out infinite;
   }
 
   .animate-fadeIn {

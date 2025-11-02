@@ -217,19 +217,16 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
     
     if (!input.trim() || isLoading) return;
 
+    const trimmedInput = input.trim();
     const userMessage: ChatMessage = {
       id: `temp_${Date.now()}`,
       agent_id: agentId,
       session_id: sessionId,
       role: 'user',
-      content: input.trim(),
+      content: trimmedInput,
       token_count: 0,
       created_at: new Date().toISOString(),
     };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
 
     // Add loading message
     const loadingMessage: ChatMessage = {
@@ -242,7 +239,11 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
       created_at: new Date().toISOString(),
       isLoading: true,
     };
-    setMessages(prev => [...prev, loadingMessage]);
+
+    // Update state in a single batch: add user message + loading message, clear input, set loading
+    setMessages(prev => [...prev, userMessage, loadingMessage]);
+    setInput('');
+    setIsLoading(true);
 
     try {
       const response = await chatbotApi.query(agentId, {
@@ -253,44 +254,37 @@ export function ChatbotInterface({ agentId, sessionId: initialSessionId }: Chatb
 
       const chatResponse = response.data;
 
-      // Remove loading message and add actual response
-      setMessages(prev => {
-        const filtered = prev.filter(m => m.id !== loadingMessage.id);
-        return [
-          ...filtered,
-          {
-            id: `assistant_${Date.now()}`,
-            agent_id: agentId,
-            session_id: chatResponse.session_id,
-            role: 'assistant',
-            content: chatResponse.response,
-            token_count: chatResponse.token_count,
-            created_at: new Date().toISOString(),
-            context_chunks: JSON.stringify(chatResponse.context_chunks),
-          },
-        ];
-      });
+      // Create assistant message
+      const assistantMessage: ChatMessage = {
+        id: `assistant_${Date.now()}`,
+        agent_id: agentId,
+        session_id: chatResponse.session_id,
+        role: 'assistant',
+        content: chatResponse.response,
+        token_count: chatResponse.token_count,
+        created_at: new Date().toISOString(),
+        context_chunks: JSON.stringify(chatResponse.context_chunks),
+      };
 
+      // Replace loading message with actual response instantly
+      setMessages(prev => prev.map(m => m.id === loadingMessage.id ? assistantMessage : m));
       setSessionId(chatResponse.session_id);
     } catch (error) {
       console.error('Chat query failed:', error);
       
-      // Remove loading message and show error
-      setMessages(prev => {
-        const filtered = prev.filter(m => m.id !== loadingMessage.id);
-        return [
-          ...filtered,
-          {
-            id: `error_${Date.now()}`,
-            agent_id: agentId,
-            session_id: sessionId,
-            role: 'assistant',
-            content: '⚠️ Sorry, I encountered an error processing your request. Please try again.',
-            token_count: 0,
-            created_at: new Date().toISOString(),
-          },
-        ];
-      });
+      // Create error message
+      const errorMessage: ChatMessage = {
+        id: `error_${Date.now()}`,
+        agent_id: agentId,
+        session_id: sessionId,
+        role: 'assistant',
+        content: '⚠️ Sorry, I encountered an error processing your request. Please try again.',
+        token_count: 0,
+        created_at: new Date().toISOString(),
+      };
+
+      // Replace loading message with error message instantly
+      setMessages(prev => prev.map(m => m.id === loadingMessage.id ? errorMessage : m));
     } finally {
       setIsLoading(false);
     }
